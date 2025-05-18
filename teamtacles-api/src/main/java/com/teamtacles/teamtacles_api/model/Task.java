@@ -27,13 +27,10 @@ public class Task {
     private String description;
 
 
-    private String status;
-
-
     private LocalDateTime dueDate;
 
 
-    // private Status status;
+    private Status status;
 
 
     // private User owner;

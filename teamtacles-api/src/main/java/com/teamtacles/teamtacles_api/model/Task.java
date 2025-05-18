@@ -2,13 +2,16 @@ package com.teamtacles.teamtacles_api.model;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
-import lombok.AllArgsConstructors;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructors;
+import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructors
-@NoArgsConstructors
+@NoArgsConstructor
+@AllArgsConstructor
 
 @Entity
 public class Task {
@@ -30,14 +33,11 @@ public class Task {
     private LocalDateTime dueDate;
 
 
-    private 
-    
-    status;
+    // private Status status;
 
 
-    private User owner;
+    // private User owner;
 
 
-    private Project project;
-
+    // private Project project;
 }

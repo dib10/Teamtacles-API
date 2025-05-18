@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
 
 @Data
 @NoArgsConstructor
@@ -21,7 +23,9 @@ public class User{
 
     private String userName;
 
+    @Size(max = 250)
+    @Email
     private String email;
 
-    // private Role role;
+    private Role role;
 }

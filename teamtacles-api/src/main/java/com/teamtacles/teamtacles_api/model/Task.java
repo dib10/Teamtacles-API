@@ -1,6 +1,7 @@
 package com.teamtacles.teamtacles_api.model;
-import java.time.LocalDateTime;
 
+import com.teamtacles.teamtacles_api.model.enums.Status;
+import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,8 +34,7 @@ public class Task {
     private Status status;
 
 
-    // private User owner;
+    private User owner;
 
-
-    // private Project project;
+    private Project project;
 }

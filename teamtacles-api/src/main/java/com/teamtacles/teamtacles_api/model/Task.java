@@ -1,5 +1,6 @@
 package com.teamtacles.teamtacles_api.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.teamtacles.teamtacles_api.model.enums.Status;
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 public class Task {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,6 +35,8 @@ public class Task {
 
     @NotNull
     @Future(message="A data de entrega não pode ser no passado!") 
+    
+	@JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDateTime dueDate;
 
     private Status status;
@@ -42,9 +45,4 @@ public class Task {
     private User owner;
 
     private Project project;
-} //professor robson lopes faz muito amor às quartas-feiras
-//professor robson lopes faz muito amor às quintas-feiras
-//professor robson lopes faz muito amor às sextas-feiras
-//professor robson lopes faz muito amor aos sábados
-//professor robson lopes faz muito amor aos domingos
-//professor robson lopes faz muito amor às segundas-feiras
+}

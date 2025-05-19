@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Data
@@ -24,14 +25,14 @@ public class User{
     private Long id;
 
     @Size(max = 50)
-    @NotNull
+    @NotBlank(message="O nome não pode estar em branco!")
     private String userName;
 
     @Size(max = 250)
-    @Email
+    @Email(message="O email deve ser válido!")
     private String email;
 
-    @NotNull
+    @NotBlank(message="A senha não pode estar em branco!")
     @Size(min = 5, max = 100) 
     private String password;
 

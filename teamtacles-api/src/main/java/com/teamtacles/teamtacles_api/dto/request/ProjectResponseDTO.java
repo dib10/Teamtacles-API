@@ -1,11 +1,10 @@
-package com.teamtacles.teamtacles_api.model;
+package com.teamtacles.teamtacles_api.dto.request;
 
 import java.util.List;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
+import com.teamtacles.teamtacles_api.model.User;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -15,15 +14,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+public class ProjectResponseDTO {
 
-@Entity
-public class Project{
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotBlank(message="O Projeto deve ter ao menos uma tarefa!")
-    private List<Task> tasks;
+    private List<TaskResponseDTO> tasks;
 
     @NotBlank(message="O Projeto deve ter um dono!")
     private User creator;

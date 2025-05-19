@@ -4,11 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -21,11 +23,18 @@ public class User{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Size(max = 50)
+    @NotNull
     private String userName;
 
     @Size(max = 250)
     @Email
     private String email;
 
+    @NotNull
+    @Size(min = 5, max = 100) 
+    private String password;
+
+    @OneToOne
     private Role role;
 }

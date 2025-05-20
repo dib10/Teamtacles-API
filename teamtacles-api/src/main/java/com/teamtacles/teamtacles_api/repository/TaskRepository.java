@@ -8,6 +8,6 @@ import com.teamtacles.teamtacles_api.model.Task;
 import java.util.Optional;
 
 @Repository
-interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<Task, Long> {
     Optional<Task> findById(Long id);
 }

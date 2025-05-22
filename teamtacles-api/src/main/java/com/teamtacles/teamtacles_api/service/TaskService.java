@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Service
 public class TaskService {
 
-    @Autowired
-    private TaskRepository taskRepository;  
+    private TaskRepository taskRepository;
+
+    public TaskService(TaskRepository taskRepository){
+        this.taskRepository = taskRepository;
+    }
     
 }

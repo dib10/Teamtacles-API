@@ -14,14 +14,14 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectResponseDTO {
+public class ProjectRequestDTO {
 
-    private List<TaskResponseDTO> tasks;
+    // private List<TaskResponseDTO> tasks;
 
     @NotBlank(message="O Projeto deve ter um dono!")
     private User creator;
 
-    private List<User> team;
+    // private List<UserRequestDTO> team;
 
     @NotBlank(message="O título não pode estar em branco!")
     @Size(max = 50)

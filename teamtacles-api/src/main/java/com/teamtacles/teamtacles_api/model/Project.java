@@ -22,7 +22,6 @@ public class Project{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message="O Projeto deve ter ao menos uma tarefa!")
     private List<Task> tasks;
 
     @NotBlank(message="O Projeto deve ter um dono!")

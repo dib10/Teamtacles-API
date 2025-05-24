@@ -20,8 +20,12 @@ public class ProjectService {
         this.modelMapper = modelMapper;
     }
 
-    public ProjectResponseDTO postProject(ProjectRequestDTO projectRequestDTO){
+    // post
+    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO){
         Project projectCreated = projectRepository.save(modelMapper.map(projectRequestDTO, Project.class));
         return modelMapper.map(projectCreated, ProjectResponseDTO.class);
     }
+
+    
+
 }

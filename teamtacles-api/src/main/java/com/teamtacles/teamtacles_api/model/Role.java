@@ -2,7 +2,6 @@ package com.teamtacles.teamtacles_api.model;
 
 import com.teamtacles.teamtacles_api.model.enums.ERole;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,8 +17,6 @@ import jakarta.persistence.Column;
 @AllArgsConstructor
 
 @Entity
-@Table(name = "roles")
-
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

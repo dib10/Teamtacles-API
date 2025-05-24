@@ -1,17 +1,23 @@
 package com.teamtacles.teamtacles_api.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +28,7 @@ public class User{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long userId;
 
     @Size(max = 50)
     @NotBlank(message="O nome não pode estar em branco!")
@@ -36,6 +42,19 @@ public class User{
     @Size(min = 5, max = 100) 
     private String password;
 
-    @OneToOne
     private Role role;
+
+    // tasks que pertencem a ele
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Task> task = new ArrayList<>();
+
+    // projetos que ele criou
+    @OneToMany(mappedBy = "creator")
+    private List<Project> createdProjects = new ArrayList<>();
+
+    // projetos que ele participa
+    @ManyToMany(mappedBy = "team")
+    private List<Project> projects = new ArrayList<>();
+
 }

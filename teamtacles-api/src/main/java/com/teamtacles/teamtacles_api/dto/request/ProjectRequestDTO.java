@@ -2,7 +2,6 @@ package com.teamtacles.teamtacles_api.dto.request;
 
 import java.util.List;
 
-import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.model.User;
 
 import jakarta.validation.constraints.NotBlank;
@@ -16,12 +15,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProjectRequestDTO {
 
-    // private List<TaskResponseDTO> tasks;
-
     @NotBlank(message="O Projeto deve ter um dono!")
     private User creator;
 
-    // private List<UserRequestDTO> team;
+    @NotBlank(message="O projeto deve ter pelo menos mais de 1 integrante!")
+    private List<Long> team;
 
     @NotBlank(message="O título não pode estar em branco!")
     @Size(max = 50)

@@ -2,9 +2,6 @@ package com.teamtacles.teamtacles_api.dto.response;
 
 import java.time.LocalDateTime;
 import com.teamtacles.teamtacles_api.model.enums.Status;
-import com.teamtacles.teamtacles_api.dto.response.*;
-import com.teamtacles.teamtacles_api.model.Project;
-import com.teamtacles.teamtacles_api.dto.response.UserResponseDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

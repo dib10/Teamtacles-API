@@ -16,7 +16,7 @@ public class ProjectResponseDTO {
     private Long id;
     private String title;
     private String description;
-    private List<Task> tasks;
-    private User creator;
-    private List<User> team;
+    private List<TaskResponseDTO> tasks;
+    private UserResponseDTO creator;
+    private List<UserResponseDTO> team;
 }

@@ -1,31 +1,93 @@
 package com.teamtacles.teamtacles_api.service;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
+import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
+import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.repository.ProjectRepository;
+import com.teamtacles.teamtacles_api.repository.UserRepository;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class ProjectService {
     
-    private ProjectRepository projectRepository;
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
+    private final PagedResponseMapper pagedResponseMapper;
 
-    private ModelMapper modelMapper;
-
-    public ProjectService(ProjectRepository projectRepositor, ModelMapper modelMapper){
+    public ProjectService(ProjectRepository projectRepository, UserRepository userRepository, ModelMapper modelMapper, PagedResponseMapper pagedResponseMapper){
         this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
         this.modelMapper = modelMapper;
+        this.pagedResponseMapper = pagedResponseMapper;
+    }
+
+    public PagedResponse<ProjectResponseDTO> getAllProjects(Pageable pageable){
+        Page<Project> projectsPage;
+        projectsPage = projectRepository.findAll(pageable);
+        return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
+    }
+
+    public PagedResponse<ProjectResponseDTO> getAll(Pageable pageable){
+        Page<Project> projectsPage;
+        projectsPage = projectRepository.findAll(pageable);
+        return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
     }
 
     // post
-    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO){
-        Project projectCreated = projectRepository.save(modelMapper.map(projectRequestDTO, Project.class));
+    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO/*, User userFromToken*/){
+        // Busca o usuário criador do projeto
+        User creatorUser = findUsers(1L);
+        List<User> team = new ArrayList<>();
+
+        // Busca todos os usuários do time iterativamente
+        for (Long userId : projectRequestDTO.getTeam()) {
+            team.add(findUsers(userId));
+        }
+
+        Project convertedProject = modelMapper.map(projectRequestDTO, Project.class);
+
+        convertedProject.setCreator(creatorUser);
+        convertedProject.setTeam(team);
+
+        Project projectCreated = projectRepository.save(convertedProject);
         return modelMapper.map(projectCreated, ProjectResponseDTO.class);
     }
 
-    
+    // put
+    public ProjectResponseDTO updateProject(Long id, ProjectRequestDTO projectRequestDTO){
+        Project project = projectRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException());
 
+        modelMapper.map(projectRequestDTO, project);
+        project.setId(id);
+        project.setTeam(project.getTeam()); // preserva o time
+        project.setCreator(project.getCreator()); // preserva o creator
+
+        Project updated = projectRepository.save(project);
+        return modelMapper.map(updated, ProjectResponseDTO.class);
+    }
+
+    // delete
+    public void deleteProject(Long id){
+        Project project = projectRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException());
+        
+        projectRepository.delete(project);
+        
+    }
+
+    private User findUsers(Long id){
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        return user;
+    }
 }

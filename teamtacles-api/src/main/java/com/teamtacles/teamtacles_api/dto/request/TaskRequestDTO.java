@@ -31,6 +31,4 @@ public class TaskRequestDTO {
 	@JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dueDate;
 
-    @NotBlank(message="Deve-se ter um projeto associado.")
-    private Long projectId;   
 }

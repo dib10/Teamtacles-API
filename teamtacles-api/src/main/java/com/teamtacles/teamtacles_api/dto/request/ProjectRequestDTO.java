@@ -15,11 +15,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProjectRequestDTO {
 
-    @NotBlank(message="O Projeto deve ter um dono!")
-    private User creator;
-
-    @NotBlank(message="O projeto deve ter pelo menos mais de 1 integrante!")
-    private List<Long> team;
+    // @NotBlank(message="O Projeto deve ter um dono!")
+    // private User creator;
 
     @NotBlank(message="O título não pode estar em branco!")
     @Size(max = 50)
@@ -27,4 +24,7 @@ public class ProjectRequestDTO {
 
     @Size(max = 50)
     private String description;
+
+    @NotBlank(message="O projeto deve ter pelo menos mais de 1 integrante!")
+    private List<Long> team;
 }

@@ -18,11 +18,12 @@ import jakarta.persistence.Column;
 
 @Entity
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false, unique = true) 
-    private ERole name;
+    private ERole roleName;
 }

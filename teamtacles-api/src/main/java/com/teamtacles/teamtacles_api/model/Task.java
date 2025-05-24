@@ -3,6 +3,8 @@ package com.teamtacles.teamtacles_api.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.teamtacles.teamtacles_api.model.enums.Status;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,6 +12,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +28,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 @Entity
-public class Task {
+public class Task implements Comparable<Task>{
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +43,7 @@ public class Task {
 
     @NotNull
     @Future(message="A data de entrega não pode ser no passado!") 
-	@JsonFormat(pattern = "dd/MM/yyyy")
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dueDate;
 
     @Enumerated(EnumType.STRING)
@@ -51,9 +55,19 @@ public class Task {
     @JoinColumn(name = "userId", nullable = false)
     private User owner;
 
+    // lista de responsabilidades
+    @ManyToMany
+    @JoinTable(name = "users_responsability", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private List<User> usersResponsability;
+
     // projetos que a task está associada
     @NotNull
     @ManyToOne(optional = false) // composição - temq pertencer a algum projeto
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+	@Override
+	public int compareTo(Task task) {
+		return this.dueDate.compareTo(task.getDueDate());
+	}
 }

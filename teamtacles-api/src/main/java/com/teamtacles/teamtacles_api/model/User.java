@@ -10,8 +10,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +28,7 @@ import jakarta.validation.constraints.NotBlank;
 @AllArgsConstructor
 
 @Entity
+@Table(name = "users")
 public class User{
 
     @Id
@@ -41,7 +46,9 @@ public class User{
     @NotBlank(message="A senha não pode estar em branco!")
     @Size(min = 5, max = 100) 
     private String password;
-
+    
+    @ManyToOne
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Role role;
 
     // tasks que pertencem a ele
@@ -56,5 +63,4 @@ public class User{
     // projetos que ele participa
     @ManyToMany(mappedBy = "team")
     private List<Project> projects = new ArrayList<>();
-
 }

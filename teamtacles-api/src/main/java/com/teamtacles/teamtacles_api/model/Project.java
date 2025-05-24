@@ -37,7 +37,6 @@ public class Project{
     @Size(max = 50)
     private String description;
 
-    // Projeto com ao menos 1 task
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Task> tasks;

@@ -15,12 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class UserResponseDTO{
-    private Long userId;
     private String userName;
     private String email;
-    private String password;
     private Role role;
-    private List<Task> task;
-    private List<Project> createdProjects;
-    private List<Project> projects;
 }

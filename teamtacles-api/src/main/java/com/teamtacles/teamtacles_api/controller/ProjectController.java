@@ -1,29 +1,56 @@
 package com.teamtacles.teamtacles_api.controller;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
 import com.teamtacles.teamtacles_api.service.ProjectService;
+
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 @RestController
 @RequestMapping("/api/project")
 public class ProjectController {
 
-    private ProjectService projectService;
+    private final ProjectService projectService;
 
     public ProjectController(ProjectService projectService){
         this.projectService = projectService;
     }
 
+    @GetMapping 
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable){
+        PagedResponse projectsPage = projectService.getAllProjects(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
+    }
+
     @PostMapping
-    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody ProjectRequestDTO projectRequestDTO){
+    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid ProjectRequestDTO projectRequestDTO){
         ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO);
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO){
+        ProjectResponseDTO responseDTO = projectService.updateProject(id, projectRequestDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id){
+        projectService.deleteProject(id);
+        return ResponseEntity.noContent().build();
     }
 }

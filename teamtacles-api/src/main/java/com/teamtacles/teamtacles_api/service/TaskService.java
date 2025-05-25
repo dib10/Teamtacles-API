@@ -50,12 +50,14 @@ public class TaskService {
             usersResponsability.add(findUsers(userId));
         }
 
-		Task taskCreated = taskRepository.save(modelMapper.map(taskRequestDTO, Task.class));
-        taskCreated.setProject(project);
-        taskCreated.setOwner(creatorUser);
-        taskCreated.setUsersResponsability(usersResponsability);
+		//Task taskCreated = taskRepository.save(modelMapper.map(taskRequestDTO, Task.class));
+        Task convertedTask = modelMapper.map(taskRequestDTO, Task.class);
+        convertedTask.setProject(project);
+        convertedTask.setOwner(creatorUser);
+        convertedTask.setUsersResponsability(usersResponsability);
 
-        return modelMapper.map(taskCreated, TaskResponseDTO.class);
+        Task createdTask = taskRepository.save(convertedTask);
+        return modelMapper.map(createdTask, TaskResponseDTO.class);
 	}
 
     // get all

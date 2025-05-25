@@ -2,6 +2,7 @@ package com.teamtacles.teamtacles_api.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -38,13 +39,14 @@ public class Project{
     private String description;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference(value = "project-task")
     private List<Task> tasks;
 
     // Criador do Projeto - Owner
     @NotBlank(message="O Projeto deve ter um dono!")
     @ManyToOne(optional = false)
     @JoinColumn(name = "creator_id", nullable = false)
+    @JsonBackReference(value = "user-project")
     private User creator;
 
     // Usuarios que participam do projeto - Equipe

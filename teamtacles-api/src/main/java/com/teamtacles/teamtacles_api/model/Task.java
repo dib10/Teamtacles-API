@@ -1,5 +1,6 @@
 package com.teamtacles.teamtacles_api.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.teamtacles.teamtacles_api.model.enums.Status;
 import java.time.LocalDateTime;
@@ -53,17 +54,19 @@ public class Task implements Comparable<Task>{
     @NotNull
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false)
+    @JsonBackReference(value = "user-task")
     private User owner;
 
     // lista de responsabilidades
     @ManyToMany
-    @JoinTable(name = "users_responsability", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @JoinTable(name = "users_responsability", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "userId"))
     private List<User> usersResponsability;
 
     // projetos que a task está associada
     @NotNull
     @ManyToOne(optional = false) // composição - temq pertencer a algum projeto
     @JoinColumn(name = "project_id", nullable = false)
+    @JsonBackReference(value = "project-task")
     private Project project;
 
 	@Override

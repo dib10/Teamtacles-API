@@ -22,7 +22,6 @@ import com.teamtacles.teamtacles_api.service.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PutMapping;
 
-
 @RestController
 @RequestMapping("/api/project")
 public class ProjectController {
@@ -33,16 +32,16 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
-    @GetMapping 
-    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable){
-        PagedResponse projectsPage = projectService.getAllProjects(pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
-    }
-
     @PostMapping
     public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid ProjectRequestDTO projectRequestDTO){
         ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO);
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+    }
+
+    @GetMapping 
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable){
+        PagedResponse projectsPage = projectService.getAllProjects(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
     }
 
     @PutMapping("/{id}")
@@ -57,7 +56,7 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id){
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();

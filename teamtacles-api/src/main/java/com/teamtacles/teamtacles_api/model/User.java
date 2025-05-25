@@ -1,12 +1,15 @@
 package com.teamtacles.teamtacles_api.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,21 +38,17 @@ public class User{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Size(max = 50)
+    @Size(min = 3, max = 50)
     @NotBlank(message="O nome não pode estar em branco!")
     private String userName;
 
-    @Size(max = 250)
     @Email(message="O email deve ser válido!")
+    @Size(min = 8, max = 50)
     private String email;
 
     @NotBlank(message="A senha não pode estar em branco!")
     @Size(min = 5, max = 100) 
     private String password;
-    
-    @ManyToOne
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Role role;
 
     // tasks que pertencem a ele
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -64,4 +63,8 @@ public class User{
     // projetos que ele participa
     @ManyToMany(mappedBy = "team")
     private List<Project> projects = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 }

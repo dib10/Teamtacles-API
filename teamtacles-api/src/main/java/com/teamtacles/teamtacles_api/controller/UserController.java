@@ -5,12 +5,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtacles.teamtacles_api.dto.request.UserRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.UserResponseDTO;
+import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.service.UserService;
 
 import jakarta.validation.Valid;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -26,8 +31,15 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> registerUser(@Valid  @RequestBody UserRequestDTO userRequestDTO){
-        UserResponseDTO userResponseDTO = userService.createUser(userRequestDTO);
-        return ResponseEntity.status(HttpStatus.OK).body(userResponseDTO);
+    public ResponseEntity<User> registerUser(@Valid  @RequestBody UserRequestDTO userRequestDTO){
+        User userCreated = userService.createUser(userRequestDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(userCreated);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping()
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 }

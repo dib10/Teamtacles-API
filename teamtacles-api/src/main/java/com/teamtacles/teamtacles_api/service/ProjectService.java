@@ -97,13 +97,13 @@ public class ProjectService {
     // delete
     public void deleteProject(Long id){
         Project project = projectRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
         
         projectRepository.delete(project);
     }
 
     private User findUsers(Long id){
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("user Not found."));
         return user;
     }
 }

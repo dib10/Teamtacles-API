@@ -16,9 +16,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProjectRequestDTO {
 
-    // @NotBlank(message="O Projeto deve ter um dono!")
-    // private User creator;
-
     @NotBlank(message="O título não pode estar em branco!")
     @Size(max = 50)
     private String title;

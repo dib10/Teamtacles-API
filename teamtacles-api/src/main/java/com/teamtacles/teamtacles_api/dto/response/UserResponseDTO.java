@@ -1,6 +1,7 @@
 package com.teamtacles.teamtacles_api.dto.response;
 
 import java.util.List;
+import java.util.Set;
 
 import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.Role;
@@ -17,5 +18,5 @@ import lombok.NoArgsConstructor;
 public class UserResponseDTO{
     private String userName;
     private String email;
-    private Role role;
+    private Set<Role> roles;
 }

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
+import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.Task;
@@ -29,7 +30,6 @@ public class TaskService {
     private final ModelMapper modelMapper;
     private final PagedResponseMapper pagedResponseMapper;
 
-
     public TaskService(TaskRepository taskRepository, UserRepository userRepository, ProjectRepository projectRepository, ModelMapper modelMapper, PagedResponseMapper pagedResponseMapper){
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
@@ -41,7 +41,7 @@ public class TaskService {
     // post
     public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO) {
         Project project = projectRepository.findById(id_project)
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new ResourceNotFoundException("Project Not Found."));
         
         User creatorUser = findUsers(1L);
         List<User> usersResponsability = new ArrayList<>();
@@ -50,7 +50,6 @@ public class TaskService {
             usersResponsability.add(findUsers(userId));
         }
 
-		//Task taskCreated = taskRepository.save(modelMapper.map(taskRequestDTO, Task.class));
         Task convertedTask = modelMapper.map(taskRequestDTO, Task.class);
         convertedTask.setProject(project);
         convertedTask.setOwner(creatorUser);
@@ -70,7 +69,7 @@ public class TaskService {
     // get task by id
     public TaskResponseDTO getTasksById(Long id){
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException());
+                .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
         
         return modelMapper.map(task, TaskResponseDTO.class);
     }
@@ -84,7 +83,7 @@ public class TaskService {
     // put
     public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskRequestDTO){
         Task task = taskRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
 
         List<User> usersResponsability = new ArrayList<>();
         
@@ -105,14 +104,13 @@ public class TaskService {
     // delete
     public void deleteTask(Long id){
         Task task = taskRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
 
         taskRepository.delete(task);
     }
     
     private User findUsers(Long id){
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User Not Found."));
         return user;
     }
-
 }

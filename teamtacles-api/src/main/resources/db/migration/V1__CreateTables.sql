@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users(
     password VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS roles(
+CREATE TABLE IF NOT EXISTS role(
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     role_name VARCHAR(10) NOT NULL UNIQUE
 );
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
     role_id BIGINT,
     PRIMARY KEY (user_id, role_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (role_id) REFERENCES roles(id)
+    FOREIGN KEY (role_id) REFERENCES role(id)
 );
 
 CREATE TABLE IF NOT EXISTS project (

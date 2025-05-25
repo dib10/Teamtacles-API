@@ -49,4 +49,12 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Resource already exists", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse); 
     }
+
+    // 500 - Quando ocorre um erro interno no servidor
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Our server is not responding, please try again later", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse); 
+    }
 }

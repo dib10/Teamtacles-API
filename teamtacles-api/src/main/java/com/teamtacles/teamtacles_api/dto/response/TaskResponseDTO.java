@@ -20,6 +20,5 @@ public class TaskResponseDTO{
     private LocalDateTime dueDate;
     private Status status;
     private UserResponseDTO owner;
-    private ProjectResponseDTO project;
     private List<UserResponseDTO> usersResponsability;
 }  

@@ -54,6 +54,7 @@ public class TaskService {
         Task convertedTask = modelMapper.map(taskRequestDTO, Task.class);
         convertedTask.setProject(project);
         convertedTask.setOwner(creatorUser);
+        convertedTask.setStatus(Status.TODO);
         convertedTask.setUsersResponsability(usersResponsability);
 
         Task createdTask = taskRepository.save(convertedTask);

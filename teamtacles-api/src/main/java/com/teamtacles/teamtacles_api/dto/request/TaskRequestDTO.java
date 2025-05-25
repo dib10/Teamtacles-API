@@ -1,6 +1,8 @@
 package com.teamtacles.teamtacles_api.dto.request;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -31,4 +33,5 @@ public class TaskRequestDTO {
 	@JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dueDate;
 
+    private List<Long> usersResponsability = new ArrayList<>();
 }

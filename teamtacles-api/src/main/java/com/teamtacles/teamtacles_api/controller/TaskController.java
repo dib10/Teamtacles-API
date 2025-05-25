@@ -32,25 +32,32 @@ public class TaskController {
 
     @PostMapping("/{id_project}/task")
     public ResponseEntity<TaskResponseDTO> createTask(@PathVariable("id_project") Long id_project, @Valid @RequestBody TaskRequestDTO taskRequestDTO){
-        TaskResponseDTO taskResponseDTO = taskService.createTask(taskRequestDTO);
+        TaskResponseDTO taskResponseDTO = taskService.createTask(id_project, taskRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(taskResponseDTO);
     }
 
     @GetMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<TaskResponseDTO> getTasksById(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task) {
-        return ResponseEntity.ok(taskService.getTasksById(id_project));
+    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable("id_task") Long id_task) {
+        return ResponseEntity.ok(taskService.getTasksById(id_task));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequestDTO taskRequestDTO){
-        TaskResponseDTO taskResponseDTO = taskService.updateTask(id, taskRequestDTO);
+    /*
+    @GetMapping("/{id_project}/task/{id_task}")
+    public ResponseEntity<TaskResponseDTO> getTaskkByIdPerProject(@PathVariable("id_project") Long id_project) {
+        return ResponseEntity.ok(taskService.getTasksById(id_project));
+    }*/
+
+    @PutMapping("/{id_project}/task/{id_task}")
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestDTO taskRequestDTO){
+        TaskResponseDTO taskResponseDTO = taskService.updateTask(id_task, taskRequestDTO);
         return ResponseEntity.status(HttpStatus.OK).body(taskResponseDTO);
     }
     
-    @DeleteMapping
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id){
-        taskService.deleteTask(id);
+    @DeleteMapping("/{id_project}/task/{id_task}")
+    public ResponseEntity<Void> deleteTask(@PathVariable("id_task") Long id_task){
+        taskService.deleteTask(id_task);
         return ResponseEntity.noContent().build();
     }
 
 }
+

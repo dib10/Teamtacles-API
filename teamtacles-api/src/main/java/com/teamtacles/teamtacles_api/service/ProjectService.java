@@ -4,10 +4,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestDTO;
+import com.teamtacles.teamtacles_api.dto.request.ProjectRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
+import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.User;
@@ -32,15 +35,15 @@ public class ProjectService {
     }
 
     public PagedResponse<ProjectResponseDTO> getAllProjects(Pageable pageable){
-        Page<Project> projectsPage;
-        projectsPage = projectRepository.findAll(pageable);
+        Page<Project> projectsPage = projectRepository.findAll(pageable);
         return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
     }
 
-    public PagedResponse<ProjectResponseDTO> getAll(Pageable pageable){
-        Page<Project> projectsPage;
-        projectsPage = projectRepository.findAll(pageable);
-        return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
+    public ProjectResponseDTO getProjectById(@PathVariable Long id){
+        Project project = projectRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
+
+        return modelMapper.map(project, ProjectResponseDTO.class);
     }
 
     // post
@@ -66,15 +69,29 @@ public class ProjectService {
     // put
     public ProjectResponseDTO updateProject(Long id, ProjectRequestDTO projectRequestDTO){
         Project project = projectRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException());
+            .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
 
         modelMapper.map(projectRequestDTO, project);
         project.setId(id);
         project.setTeam(project.getTeam()); // preserva o time
         project.setCreator(project.getCreator()); // preserva o creator
 
-        Project updated = projectRepository.save(project);
-        return modelMapper.map(updated, ProjectResponseDTO.class);
+        Project updatedProject = projectRepository.save(project);
+        return modelMapper.map(updatedProject, ProjectResponseDTO.class);
+    }
+
+    // patch
+    public ProjectResponseDTO partialUpdateProject(Long id, ProjectRequestPatchDTO projectRequestPatchDTO){
+        Project project = projectRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
+
+        modelMapper.map(projectRequestPatchDTO, project);
+        project.setId(id);
+        project.setTeam(project.getTeam()); // preserva o time
+        project.setCreator(project.getCreator()); // preserva o creator
+
+        Project updatedProject = projectRepository.save(project);
+        return modelMapper.map(updatedProject, ProjectResponseDTO.class);
     }
 
     // delete
@@ -83,7 +100,6 @@ public class ProjectService {
             .orElseThrow(() -> new RuntimeException());
         
         projectRepository.delete(project);
-        
     }
 
     private User findUsers(Long id){

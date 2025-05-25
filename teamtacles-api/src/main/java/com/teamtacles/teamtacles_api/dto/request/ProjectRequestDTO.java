@@ -1,5 +1,6 @@
 package com.teamtacles.teamtacles_api.dto.request;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.teamtacles.teamtacles_api.model.User;
@@ -26,5 +27,5 @@ public class ProjectRequestDTO {
     private String description;
 
     @NotBlank(message="O projeto deve ter pelo menos mais de 1 integrante!")
-    private List<Long> team;
+    private List<Long> team = new ArrayList<>();
 }

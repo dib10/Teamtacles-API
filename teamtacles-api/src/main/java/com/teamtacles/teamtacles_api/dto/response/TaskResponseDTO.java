@@ -1,6 +1,9 @@
 package com.teamtacles.teamtacles_api.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.model.enums.Status;
 
 import lombok.AllArgsConstructor;
@@ -18,4 +21,5 @@ public class TaskResponseDTO{
     private Status status;
     private UserResponseDTO owner;
     private ProjectResponseDTO project;
+    private List<UserResponseDTO> usersResponsability;
 }  

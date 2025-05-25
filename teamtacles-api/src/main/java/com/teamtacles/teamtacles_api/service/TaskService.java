@@ -6,13 +6,17 @@ import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
+import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.Task;
 import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.model.enums.Status;
+import com.teamtacles.teamtacles_api.repository.ProjectRepository;
 import com.teamtacles.teamtacles_api.repository.TaskRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 
@@ -21,23 +25,35 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
     private final ModelMapper modelMapper;
     private final PagedResponseMapper pagedResponseMapper;
 
 
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository, ModelMapper modelMapper, PagedResponseMapper pagedResponseMapper){
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, ProjectRepository projectRepository, ModelMapper modelMapper, PagedResponseMapper pagedResponseMapper){
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
         this.modelMapper = modelMapper;
         this.pagedResponseMapper = pagedResponseMapper;
     }
 
     // post
-    public TaskResponseDTO createTask(TaskRequestDTO taskRequestDTO) {
+    public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO) {
+        Project project = projectRepository.findById(id_project)
+            .orElseThrow(() -> new RuntimeException());
+        
         User creatorUser = findUsers(1L);
+        List<User> usersResponsability = new ArrayList<>();
+        
+        for (Long userId : taskRequestDTO.getUsersResponsability()) {
+            usersResponsability.add(findUsers(userId));
+        }
 
 		Task taskCreated = taskRepository.save(modelMapper.map(taskRequestDTO, Task.class));
+        taskCreated.setProject(project);
         taskCreated.setOwner(creatorUser);
+        taskCreated.setUsersResponsability(usersResponsability);
 
         return modelMapper.map(taskCreated, TaskResponseDTO.class);
 	}
@@ -56,22 +72,28 @@ public class TaskService {
         return modelMapper.map(task, TaskResponseDTO.class);
     }
 
-    public PagedResponse<TaskResponseDTO> getAllTasksByStatus(Pageable pageable, String status){
+    /*public PagedResponse<TaskResponseDTO> getAllTasksByStatus(Pageable pageable, String status){
         Status statusEnum = Status.valueOf(status);
         Page<Task> tasks = taskRepository.findByStatus(statusEnum, pageable);
         return pagedResponseMapper.toPagedResponse(tasks, TaskResponseDTO.class);
-    }
+    }*/
 
     // put
     public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskRequestDTO){
         Task task = taskRepository.findById(id)
             .orElseThrow(() -> new RuntimeException());
 
+        List<User> usersResponsability = new ArrayList<>();
+        
+        for (Long userId : taskRequestDTO.getUsersResponsability()) {
+            usersResponsability.add(findUsers(userId));
+        }
+
         modelMapper.map(taskRequestDTO, task);
         task.setId(id);
         task.setProject(task.getProject());
         task.setOwner(task.getOwner());
-        task.setUsersResponsability(task.getUsersResponsability());
+        task.setUsersResponsability(usersResponsability);
 
         Task updated = taskRepository.save(task);
         return modelMapper.map(updated, TaskResponseDTO.class);

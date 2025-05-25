@@ -2,9 +2,11 @@ package com.teamtacles.teamtacles_api.controller;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestDTO;
+import com.teamtacles.teamtacles_api.dto.request.ProjectRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
 import com.teamtacles.teamtacles_api.service.ProjectService;
 
@@ -45,6 +48,12 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO){
         ProjectResponseDTO responseDTO = projectService.updateProject(id, projectRequestDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProjectResponseDTO> partialUpdateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestPatchDTO projectRequestPatchDTO){
+        ProjectResponseDTO responseDTO = projectService.partialUpdateProject(id, projectRequestPatchDTO);
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 

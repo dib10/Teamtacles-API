@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
+import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.service.TaskService;
 
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,8 +33,8 @@ public class TaskController {
     }
 
     @PostMapping("/{id_project}/task")
-    public ResponseEntity<TaskResponseDTO> createTask(@PathVariable("id_project") Long id_project, @Valid @RequestBody TaskRequestDTO taskRequestDTO){
-        TaskResponseDTO taskResponseDTO = taskService.createTask(id_project, taskRequestDTO);
+    public ResponseEntity<TaskResponseDTO> createTask(@PathVariable("id_project") Long id_project, @Valid @RequestBody TaskRequestDTO taskRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        TaskResponseDTO taskResponseDTO = taskService.createTask(id_project, taskRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.CREATED).body(taskResponseDTO);
     }
 

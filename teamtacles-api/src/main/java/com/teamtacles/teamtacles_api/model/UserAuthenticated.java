@@ -14,6 +14,10 @@ public class UserAuthenticated implements UserDetails {
     public UserAuthenticated(User user) {
         this.user = user;
     } 
+
+    public User getUser() {
+        return user;
+    }
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

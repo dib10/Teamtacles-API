@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 
-@OpenAPIDefinition(info = @Info(title = "TeamTacles API", version = "1.0", description = "Documentação da API TeamTacles - Gerenciamento de Tarefas em Equipe"))
+@OpenAPIDefinition(info = @Info(title = "TeamTacles API", version = "1.0", description = "TeamTacles API Documentation – Team Task Management"))
 @SpringBootApplication
 public class TeamtaclesApiApplication {
 

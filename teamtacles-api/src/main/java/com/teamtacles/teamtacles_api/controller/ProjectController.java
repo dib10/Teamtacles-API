@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,6 +18,7 @@ import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
+import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.service.ProjectService;
 
 import jakarta.validation.Valid;
@@ -33,8 +35,8 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid ProjectRequestDTO projectRequestDTO){
-        ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO);
+    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 

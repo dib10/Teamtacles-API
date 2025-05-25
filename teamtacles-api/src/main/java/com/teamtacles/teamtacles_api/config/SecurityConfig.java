@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -41,12 +43,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, 
-        CustomJwtAuthenticationConverter customJwtAuthenticationConverter) throws Exception {
+        CustomJwtAuthenticationConverter customJwtAuthenticationConverter) throws AuthenticationCredentialsNotFoundException, AccessDeniedException, Exception {
 
         http.csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions().sameOrigin()) //
                 .authorizeHttpRequests(auth ->  auth.requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/api/user/register").permitAll()
                         .requestMatchers("/h2-console/**").permitAll().anyRequest().authenticated()) //
                 .oauth2ResourceServer(
                         conf -> conf.jwt(jwt -> jwt.jwtAuthenticationConverter(customJwtAuthenticationConverter)))

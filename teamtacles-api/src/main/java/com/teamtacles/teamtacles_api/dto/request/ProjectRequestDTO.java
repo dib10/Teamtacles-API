@@ -15,14 +15,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProjectRequestDTO {
-
-    @NotBlank(message="O título não pode estar em branco!")
-    @Size(max = 50)
+    @NotBlank(message = "The title must not be blank")
+    @Size(max = 50, message = "The title must not exceed 50 characters")
     private String title;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "The description must not exceed 50 characters")
     private String description;
 
-    @NotBlank(message="O projeto deve ter pelo menos mais de 1 integrante!")
+    @NotBlank(message = "The project must have at least one more member")
     private List<Long> team = new ArrayList<>();
 }

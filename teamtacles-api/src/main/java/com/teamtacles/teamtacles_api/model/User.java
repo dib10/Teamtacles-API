@@ -39,14 +39,14 @@ public class User{
     private Long userId;
 
     @Size(min = 3, max = 50)
-    @NotBlank(message="O nome não pode estar em branco!")
+    @NotBlank(message="The username must not be blank")
     private String userName;
 
-    @Email(message="O email deve ser válido!")
+    @Email(message="The email must be valid.")
     @Size(min = 8, max = 50)
     private String email;
 
-    @NotBlank(message="A senha não pode estar em branco!")
+    @NotBlank(message="The password cannot be blank")
     @Size(min = 5, max = 100) 
     private String password;
 

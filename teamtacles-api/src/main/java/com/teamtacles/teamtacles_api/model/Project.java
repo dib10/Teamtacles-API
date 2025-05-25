@@ -31,7 +31,7 @@ public class Project{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message="O título não pode estar em branco!")
+    @NotBlank(message="The title cannot be blank!")
     @Size(max = 50)
     private String title;
 
@@ -43,7 +43,7 @@ public class Project{
     private List<Task> tasks;
 
     // Criador do Projeto - Owner
-    @NotBlank(message="O Projeto deve ter um dono!")
+    @NotBlank(message="The project must have an owner")
     @ManyToOne(optional = false)
     @JoinColumn(name = "creator_id", nullable = false)
     @JsonBackReference(value = "user-project")

@@ -47,9 +47,9 @@ public class ProjectService {
     }
 
     // post
-    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO/*, User userFromToken*/){
+    public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO, User userFromToken){
         // Busca o usuário criador do projeto
-        User creatorUser = findUsers(1L);
+        User creatorUser = findUsers(userFromToken.getUserId());
         List<User> team = new ArrayList<>();
 
         // Busca todos os usuários do time iterativamente

@@ -6,10 +6,12 @@ import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import com.teamtacles.teamtacles_api.dto.request.ERoleRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.UserRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.UserResponseDTO;
 import com.teamtacles.teamtacles_api.exception.EmailAlreadyExistsException;
 import com.teamtacles.teamtacles_api.exception.PasswordMismatchException;
+import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.exception.UsernameAlreadyExistsException;
 import com.teamtacles.teamtacles_api.model.Role;
 import com.teamtacles.teamtacles_api.model.User;
@@ -45,14 +47,26 @@ public class UserService {
         User user = new User();
         user.setUserName(userRequestDTO.getUserName());
         user.setEmail(userRequestDTO.getEmail());
-        user.setUserName(passwordEncoder.encode(userRequestDTO.getPassword()));
+        user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
         Role userRole = roleRepository.findByRoleName(ERole.USER)
-            .orElseThrow(() -> new RuntimeException("Error: Role USER not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER not found."));
         user.setRoles(Set.of(userRole));
         
         return userRepository.save(user);
     }
-    
+
+    public User exchangepaperUser(Long id, ERoleRequestDTO eRoleRequestDTO) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found."));  
+
+        Role userNewRole = roleRepository.findByRoleName(eRoleRequestDTO.getRole())
+            .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER not found."));
+
+        user.setRoles(Set.of(userNewRole));
+
+        return userRepository.save(user);
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }

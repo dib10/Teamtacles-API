@@ -36,14 +36,14 @@ public class Task implements Comparable<Task>{
     private Long id;
 
     @Size(max = 50)
-	@NotBlank(message="O título não pode estar em branco!")
+	@NotBlank(message="The title cannot be blank!")
     private String title; 
 
     @Size(max = 250)
     private String description;
 
     @NotNull
-    @Future(message="A data de entrega não pode ser no passado!") 
+    @Future(message="The due date must be in the future") 
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dueDate;
 

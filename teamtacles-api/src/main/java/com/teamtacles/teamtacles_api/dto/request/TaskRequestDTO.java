@@ -20,17 +20,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TaskRequestDTO {
 
-    @Size(max = 50)
-	@NotBlank(message="O título não pode estar em branco!")
+    @Size(max = 50, message = "The title must not exceed 50 characters")
+    @NotBlank(message = "The title must not be blank")
     private String title; 
 
-    @Size(max = 250)        
+    @Size(max = 250, message = "The description must not exceed 250 characters")
     private String description;
 
-    @NotBlank
-    @Future(message="A data de entrega não pode ser no passado!")
+    @NotBlank(message = "The due date must not be blank")
+    @Future(message = "The due date cannot be in the past")
     @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm")
-	@JsonFormat(pattern = "dd/MM/yyyy HH:mm")
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dueDate;
 
     private List<Long> usersResponsability = new ArrayList<>();

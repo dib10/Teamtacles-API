@@ -19,7 +19,7 @@ public class AuthenticationService {
 
     public String authenticate(Authentication authentication){
         String username = authentication.getName();
-        User user = userRepository.findByUserName(username)
+        User user = userRepository.findByUserNameIgnoreCase(username)
             .orElseThrow(() -> new ResourceNotFoundException("User not Found."));
         return jwtService.generateToken(user);
     }

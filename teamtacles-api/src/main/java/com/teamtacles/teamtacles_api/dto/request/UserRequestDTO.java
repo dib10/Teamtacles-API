@@ -11,19 +11,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRequestDTO {
-    @Size(max = 50)
-    @NotBlank(message="O nome não pode estar em branco!")
+
+    @Size(max = 50, message = "The username must not exceed 50 characters")
+    @NotBlank(message = "The name cannot be blank!")
     private String userName;
 
     @Size(max = 250)
-    @Email(message="O email deve ser válido!")
+    @Email(message = "The email must be valid!")
     private String email;
 
-    @Size(min = 5, max = 100) 
-    @NotBlank(message="A senha não pode estar em branco!")
+    @Size(min = 5, max = 100, message = "The password must contain between 5 and 100 characters") 
+    @NotBlank(message = "The password cannot be blank!")
     private String password;
 
-    @Size(min = 5, max = 100)
-    @NotBlank(message="A senha de confirmação não pode estar em branco!")
+    @NotBlank(message = "The password confirmation cannot be blank!")
     private String passwordConfirm;
+
 }

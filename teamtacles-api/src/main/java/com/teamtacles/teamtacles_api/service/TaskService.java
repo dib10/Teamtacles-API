@@ -39,11 +39,9 @@ public class TaskService {
     }
 
     // post
-    public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO) {
-        Project project = projectRepository.findById(id_project)
-            .orElseThrow(() -> new ResourceNotFoundException("Project Not Found."));
-        
-        User creatorUser = findUsers(1L);
+    public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO, User userFromToken) {
+        Project project = findprojects(id_project);
+        User creatorUser = findUsers(userFromToken.getUserId());
         List<User> usersResponsability = new ArrayList<>();
         
         for (Long userId : taskRequestDTO.getUsersResponsability()) {
@@ -112,5 +110,10 @@ public class TaskService {
     private User findUsers(Long id){
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User Not Found."));
         return user;
+    }
+
+    private Project findprojects(Long id_project){
+        Project project = projectRepository.findById(id_project).orElseThrow(() -> new ResourceNotFoundException("Project Not Found."));        
+        return project;
     }
 }

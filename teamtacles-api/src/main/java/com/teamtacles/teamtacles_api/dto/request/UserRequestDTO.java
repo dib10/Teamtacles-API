@@ -26,5 +26,4 @@ public class UserRequestDTO {
 
     @NotBlank(message = "The password confirmation cannot be blank!")
     private String passwordConfirm;
-
 }

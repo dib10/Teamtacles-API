@@ -6,18 +6,23 @@ import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import com.teamtacles.teamtacles_api.dto.request.ERoleRequestDTO;
+import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
+import com.teamtacles.teamtacles_api.dto.request.RoleRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.UserRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.UserResponseDTO;
 import com.teamtacles.teamtacles_api.exception.EmailAlreadyExistsException;
 import com.teamtacles.teamtacles_api.exception.PasswordMismatchException;
 import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.exception.UsernameAlreadyExistsException;
+import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Role;
 import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.model.enums.ERole;
 import com.teamtacles.teamtacles_api.repository.RoleRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
@@ -26,11 +31,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final PagedResponseMapper pagedResponseMapper;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository){
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PagedResponseMapper pagedResponseMapper){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.pagedResponseMapper = pagedResponseMapper;
     }
 
     public User createUser(UserRequestDTO userRequestDTO){
@@ -55,19 +62,25 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User exchangepaperUser(Long id, ERoleRequestDTO eRoleRequestDTO) {
+    // patch Role
+    public User exchangepaperUser(Long id, RoleRequestDTO roleRequestDTO) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User not found."));  
 
-        Role userNewRole = roleRepository.findByRoleName(eRoleRequestDTO.getRole())
-            .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER not found."));
+        Role userNewRole = roleRepository.findByRoleName(ERole.valueOf(roleRequestDTO.getRole().toUpperCase()))
+            .orElseThrow(() -> new ResourceNotFoundException("Error: Role not found."));
 
-        user.setRoles(Set.of(userNewRole));
+        //  limpa as roles atuais e adiciona a nova
+        user.getRoles().clear(); 
+        user.getRoles().add(userNewRole);
 
         return userRepository.save(user);
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public PagedResponse<UserResponseDTO> getAllUsers(Pageable pageable) {
+        Page<User> users = userRepository.findAll(pageable);
+        return pagedResponseMapper.toPagedResponse(users, UserResponseDTO.class);
     }
 }
+
+// LAUTINHOO

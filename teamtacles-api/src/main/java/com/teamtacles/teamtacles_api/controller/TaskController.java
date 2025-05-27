@@ -39,9 +39,9 @@ public class TaskController {
     }
 
     @GetMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable("id_task") Long id_task) {
-        return ResponseEntity.ok(taskService.getTasksById(id_task));
-    }
+    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser) {
+        return ResponseEntity.ok(taskService.getTasksById(id_task, authenticatedUser.getUser()));
+    }   
 
     /*
     @GetMapping("/{id_project}/task/{id_task}")
@@ -50,14 +50,14 @@ public class TaskController {
     }*/
 
     @PutMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestDTO taskRequestDTO){
-        TaskResponseDTO taskResponseDTO = taskService.updateTask(id_task, taskRequestDTO);
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestDTO taskRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        TaskResponseDTO taskResponseDTO = taskService.updateTask(id_task, taskRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(taskResponseDTO);
     }
     
     @DeleteMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<Void> deleteTask(@PathVariable("id_task") Long id_task){
-        taskService.deleteTask(id_task);
+    public ResponseEntity<Void> deleteTask(@PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        taskService.deleteTask(id_task, authenticatedUser.getUser());
         return ResponseEntity.noContent().build();
     }
 

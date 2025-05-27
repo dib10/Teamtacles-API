@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,27 +41,27 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
-    @GetMapping 
-    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable){
-        PagedResponse projectsPage = projectService.getAllProjects(pageable);
+    @GetMapping("/all")
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        PagedResponse projectsPage = projectService.getAllProjects(pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO){
-        ProjectResponseDTO responseDTO = projectService.updateProject(id, projectRequestDTO);
+    public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        ProjectResponseDTO responseDTO = projectService.updateProject(id, projectRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ProjectResponseDTO> partialUpdateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestPatchDTO projectRequestPatchDTO){
-        ProjectResponseDTO responseDTO = projectService.partialUpdateProject(id, projectRequestPatchDTO);
+    public ResponseEntity<ProjectResponseDTO> partialUpdateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestPatchDTO projectRequestPatchDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        ProjectResponseDTO responseDTO = projectService.partialUpdateProject(id, projectRequestPatchDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id){
-        projectService.deleteProject(id);
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        projectService.deleteProject(id, authenticatedUser.getUser());
         return ResponseEntity.noContent().build();
     }
 }

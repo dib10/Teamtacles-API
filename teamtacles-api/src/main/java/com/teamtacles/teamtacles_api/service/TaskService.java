@@ -10,10 +10,12 @@ import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.Task;
 import com.teamtacles.teamtacles_api.model.User;
+import com.teamtacles.teamtacles_api.model.enums.ERole;
 import com.teamtacles.teamtacles_api.model.enums.Status;
 import com.teamtacles.teamtacles_api.repository.ProjectRepository;
 import com.teamtacles.teamtacles_api.repository.TaskRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
+import com.teamtacles.teamtacles_api.exception.InvalidTaskStateException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,16 +60,13 @@ public class TaskService {
         return modelMapper.map(createdTask, TaskResponseDTO.class);
 	}
 
-    // get all
-    public TaskResponseDTO getAllTasks(Pageable pageable){
-        Page<Task> tasks = taskRepository.findAll(pageable);
-        return modelMapper.map(tasks, TaskResponseDTO.class);
-    }
-
     // get task by id
-    public TaskResponseDTO getTasksById(Long id){
+    public TaskResponseDTO getTasksById(Long id, User userFromToken){
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
+
+        // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+        ensureUserCanModifyTask(task, userFromToken);
         
         return modelMapper.map(task, TaskResponseDTO.class);
     }
@@ -79,9 +78,11 @@ public class TaskService {
     }*/
 
     // put
-    public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskRequestDTO){
+    public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskRequestDTO, User userFromToken) {
         Task task = taskRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
+        // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+        ensureUserCanModifyTask(task, userFromToken);
 
         List<User> usersResponsability = new ArrayList<>();
         
@@ -94,15 +95,17 @@ public class TaskService {
         task.setProject(task.getProject());
         task.setOwner(task.getOwner());
         task.setUsersResponsability(usersResponsability);
-
         Task updated = taskRepository.save(task);
+        
         return modelMapper.map(updated, TaskResponseDTO.class);
     }
 
     // delete
-    public void deleteTask(Long id){
+    public void deleteTask(Long id, User userFromToken) {
         Task task = taskRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
+            // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+        ensureUserCanModifyTask(task, userFromToken);
 
         taskRepository.delete(task);
     }
@@ -116,4 +119,20 @@ public class TaskService {
         Project project = projectRepository.findById(id_project).orElseThrow(() -> new ResourceNotFoundException("Project Not Found."));        
         return project;
     }
+
+    // Métodos para auxiliar
+
+    // Verificando se o usuário é admin
+    private boolean isADM(User user) {
+        return user.getRoles().stream().anyMatch(role -> role.getRoleName().equals(ERole.ADMIN));
+    }
+
+    // Validando se o usuário é dono do projeto, se ele não for adm, ele não consegue criar, editar ou deletar tarefas de outros usuários
+    private void ensureUserCanModifyTask(Task task, User user) {
+        if(!isADM(user) && !task.getOwner().getUserId().equals(user.getUserId())) {
+            throw new InvalidTaskStateException ("You do not have permission to modify this task."); 
+        }
+    }
+
+
 }

@@ -11,4 +11,5 @@ import com.teamtacles.teamtacles_api.model.User;
 public interface ProjectRepository extends JpaRepository<Project, Long>{
     Page<Project> findByCreator(User creator, Pageable pageable);
     Page<Project> findById(Long id, Pageable pageable);
+    Page<Project> findByTeam(User user, Pageable pageable);
 }

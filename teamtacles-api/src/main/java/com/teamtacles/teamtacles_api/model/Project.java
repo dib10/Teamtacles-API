@@ -43,7 +43,6 @@ public class Project{
     private List<Task> tasks;
 
     // Criador do Projeto - Owner
-    @NotBlank(message="The project must have an owner")
     @ManyToOne(optional = false)
     @JoinColumn(name = "creator_id", nullable = false)
     @JsonBackReference(value = "user-project")

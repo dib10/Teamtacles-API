@@ -6,6 +6,7 @@ import java.util.List;
 import com.teamtacles.teamtacles_api.model.User;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,6 @@ public class ProjectRequestDTO {
     @Size(max = 50, message = "The description must not exceed 50 characters")
     private String description;
 
-    @NotBlank(message = "The project must have at least one more member")
+    @NotEmpty(message = "The team must have at least one user")
     private List<Long> team = new ArrayList<>();
 }

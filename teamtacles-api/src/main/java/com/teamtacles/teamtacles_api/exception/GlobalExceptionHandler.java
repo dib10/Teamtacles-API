@@ -2,7 +2,9 @@ package com.teamtacles.teamtacles_api.exception;
 import org.springframework.security.access.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors; 
+import java.util.stream.Collectors;
+
+import org.modelmapper.spi.ErrorMessage;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +54,15 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Resource already exists", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse); 
     }
+
+    // 409 - Quando o usuário tenta alterar uma tarefa concluída / de outro usuário
+    @ExceptionHandler(InvalidTaskStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> handleInvalidTaskStateException(InvalidTaskStateException ex){
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Resource cannot be modified", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
 
     // 401 - Quando o usuário não está autenticado
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)

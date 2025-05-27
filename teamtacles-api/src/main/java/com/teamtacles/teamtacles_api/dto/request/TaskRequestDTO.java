@@ -27,7 +27,6 @@ public class TaskRequestDTO {
     @Size(max = 250, message = "The description must not exceed 250 characters")
     private String description;
 
-    @NotBlank(message = "The due date must not be blank")
     @Future(message = "The due date cannot be in the past")
     @DateTimeFormat(pattern = "dd/MM/yyyy HH:mm")
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")

@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
+import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.service.TaskService;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -39,27 +41,26 @@ public class TaskController {
     }
 
     @GetMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser) {
-        return ResponseEntity.ok(taskService.getTasksById(id_task, authenticatedUser.getUser()));
+    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser) {
+        return ResponseEntity.ok(taskService.getTasksById(id_project, id_task, authenticatedUser.getUser()));
     }   
 
-    /*
-    @GetMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<TaskResponseDTO> getTaskkByIdPerProject(@PathVariable("id_project") Long id_project) {
-        return ResponseEntity.ok(taskService.getTasksById(id_project));
-    }*/
+    @PatchMapping("/{id_project}/task/{id_task}/updateStatus")
+    public ResponseEntity<TaskResponseDTO> updateStatus(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestPatchDTO taskRequestPatchDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        TaskResponseDTO taskResponseDTO = taskService.updateStatus(id_project, id_task, taskRequestPatchDTO, authenticatedUser.getUser());
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskResponseDTO);
+    }
 
     @PutMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestDTO taskRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
-        TaskResponseDTO taskResponseDTO = taskService.updateTask(id_task, taskRequestDTO, authenticatedUser.getUser());
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestDTO taskRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        TaskResponseDTO taskResponseDTO = taskService.updateTask(id_project, id_task, taskRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(taskResponseDTO);
     }
     
     @DeleteMapping("/{id_project}/task/{id_task}")
-    public ResponseEntity<Void> deleteTask(@PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
-        taskService.deleteTask(id_task, authenticatedUser.getUser());
+    public ResponseEntity<Void> deleteTask(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        taskService.deleteTask(id_project, id_task, authenticatedUser.getUser());
         return ResponseEntity.noContent().build();
     }
-
 }
 

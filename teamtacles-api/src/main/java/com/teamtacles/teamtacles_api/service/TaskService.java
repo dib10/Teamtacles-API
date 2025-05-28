@@ -4,6 +4,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
+import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
+import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
@@ -41,7 +43,7 @@ public class TaskService {
     }
 
     // post
-    public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO, User userFromToken) {
+    public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO, User userFromToken) {        
         Project project = findprojects(id_project);
         User creatorUser = findUsers(userFromToken.getUserId());
         List<User> usersResponsability = new ArrayList<>();
@@ -49,7 +51,7 @@ public class TaskService {
         for (Long userId : taskRequestDTO.getUsersResponsability()) {
             usersResponsability.add(findUsers(userId));
         }
-
+        
         Task convertedTask = modelMapper.map(taskRequestDTO, Task.class);
         convertedTask.setProject(project);
         convertedTask.setOwner(creatorUser);
@@ -61,9 +63,11 @@ public class TaskService {
 	}
 
     // get task by id
-    public TaskResponseDTO getTasksById(Long id, User userFromToken){
-        Task task = taskRepository.findById(id)
+    public TaskResponseDTO getTasksById(Long id_project, Long id_task, User userFromToken){
+        Task task = taskRepository.findById(id_task)
                 .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
+
+        ensureProjectMatchesTask(task, id_project);
 
         // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
         ensureUserCanModifyTask(task, userFromToken);
@@ -78,10 +82,11 @@ public class TaskService {
     }*/
 
     // put
-    public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskRequestDTO, User userFromToken) {
-        Task task = taskRepository.findById(id)
+    public TaskResponseDTO updateTask(Long id_project, Long id_task, TaskRequestDTO taskRequestDTO, User userFromToken) {
+        Task task = taskRepository.findById(id_task)
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
         // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+        ensureProjectMatchesTask(task, id_project);
         ensureUserCanModifyTask(task, userFromToken);
 
         List<User> usersResponsability = new ArrayList<>();
@@ -91,7 +96,7 @@ public class TaskService {
         }
 
         modelMapper.map(taskRequestDTO, task);
-        task.setId(id);
+        task.setId(id_task);
         task.setProject(task.getProject());
         task.setOwner(task.getOwner());
         task.setUsersResponsability(usersResponsability);
@@ -100,18 +105,35 @@ public class TaskService {
         return modelMapper.map(updated, TaskResponseDTO.class);
     }
 
+    // patch 
+    public TaskResponseDTO updateStatus(Long id_project, Long id_task, TaskRequestPatchDTO taskRequestPatchDTO, User userFromToken){
+        Task task = taskRepository.findById(id_task)
+            .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
+        
+        ensureProjectMatchesTask(task, id_project);
+        ensureUserCanModifyTask(task, userFromToken);
+
+        taskRequestPatchDTO.getStatus().ifPresent(task::setStatus);
+        task.setId(id_task);
+        task.setOwner(task.getOwner());
+        
+        Task taskUpdated = taskRepository.save(task);
+        return modelMapper.map(taskUpdated, TaskResponseDTO.class);
+    }
+
     // delete
-    public void deleteTask(Long id, User userFromToken) {
-        Task task = taskRepository.findById(id)
+    public void deleteTask(Long id_project, Long id_task, User userFromToken) {
+        Task task = taskRepository.findById(id_task)
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+        ensureProjectMatchesTask(task, id_project);
         ensureUserCanModifyTask(task, userFromToken);
 
         taskRepository.delete(task);
     }
     
-    private User findUsers(Long id){
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User Not Found."));
+    private User findUsers(Long id_task){
+        User user = userRepository.findById(id_task).orElseThrow(() -> new ResourceNotFoundException("User Not Found."));
         return user;
     }
 
@@ -127,12 +149,20 @@ public class TaskService {
         return user.getRoles().stream().anyMatch(role -> role.getRoleName().equals(ERole.ADMIN));
     }
 
-    // Validando se o usuário é dono do projeto, se ele não for adm, ele não consegue criar, editar ou deletar tarefas de outros usuários
+    // Validando se o usuário é dono do projeto, se ele não for adm/responsavel, ele não consegue criar, editar ou deletar tarefas de outros usuários
     private void ensureUserCanModifyTask(Task task, User user) {
-        if(!isADM(user) && !task.getOwner().getUserId().equals(user.getUserId())) {
+        boolean isResposible = task.getUsersResponsability().stream() 
+            .anyMatch(resposible -> resposible.getUserId().equals(user.getUserId())); //verifica se o usuário é responsável pela tarefa
+
+        if(!isADM(user) && !task.getOwner().getUserId().equals(user.getUserId()) && !isResposible) {
             throw new InvalidTaskStateException ("You do not have permission to modify this task."); 
         }
     }
-
-
+    
+    // Verifica se o projeto da tarefa corresponde ao projeto fornecido
+    private void ensureProjectMatchesTask(Task task, Long id_project){
+        if(!(task.getProject().getId() == id_project)){
+            throw new ResourceNotFoundException("Task does not belong to the specified project.");
+        }
+    }
 }

@@ -141,8 +141,7 @@ public class ProjectService {
     // Validando se o usuário é dono do projeto, se ele não for adm, ele não consegue criar, editar ou deletar tarefas de outros usuários
     private void ensureUserCanModifyTask(Project project, User user) {
         if(!isADM(user) && !project.getId().equals(user.getUserId())) {
-        throw new InvalidTaskStateException (" You do not have permission to modify this project."); 
+            throw new InvalidTaskStateException (" You do not have permission to modify this project."); 
         }
     }
-
 }

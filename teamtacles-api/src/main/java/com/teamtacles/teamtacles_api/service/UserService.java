@@ -32,15 +32,18 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final PagedResponseMapper pagedResponseMapper;
+    private final ModelMapper modelMapper; // Adicione esta linha
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PagedResponseMapper pagedResponseMapper){
+
+   public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PagedResponseMapper pagedResponseMapper, ModelMapper modelMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.pagedResponseMapper = pagedResponseMapper;
+        this.modelMapper = modelMapper; // Adicione esta linha
     }
 
-    public User createUser(UserRequestDTO userRequestDTO){
+    public UserResponseDTO createUser(UserRequestDTO userRequestDTO) { 
         if(userRepository.existsByUserName(userRequestDTO.getUserName())){
             throw new UsernameAlreadyExistsException("Username already exists"); 
         }
@@ -58,8 +61,10 @@ public class UserService {
         Role userRole = roleRepository.findByRoleName(ERole.USER)
             .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER not found."));
         user.setRoles(Set.of(userRole));
-        
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        UserResponseDTO userResponseDTO = modelMapper.map(savedUser, UserResponseDTO.class);
+        return userResponseDTO;
     }
 
     // patch Role
@@ -82,4 +87,3 @@ public class UserService {
         return pagedResponseMapper.toPagedResponse(users, UserResponseDTO.class);
     }
 }
-

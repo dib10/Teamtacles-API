@@ -1,6 +1,7 @@
 package com.teamtacles.teamtacles_api.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
@@ -74,12 +75,26 @@ public class TaskService {
         
         return modelMapper.map(task, TaskResponseDTO.class);
     }
+    
+    public PagedResponse<TaskResponseDTO> getAllTasksFromUserInProject(Pageable pageable, Long projectId, Long userId, User userFromToken) {
+        if (!isADM(userFromToken)) {
+            throw new AccessDeniedException("Access Forbidden");
+        }
+        // Verifica se o projeto existe
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("Project not found."));
 
-    /*public PagedResponse<TaskResponseDTO> getAllTasksByStatus(Pageable pageable, String status){
-        Status statusEnum = Status.valueOf(status);
-        Page<Task> tasks = taskRepository.findByStatus(statusEnum, pageable);
-        return pagedResponseMapper.toPagedResponse(tasks, TaskResponseDTO.class);
-    }*/
+        // Verifica se o usuário existe
+        userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        Page<Task> tasksPage = taskRepository
+            .findByProjectIdAndUsersResponsabilityId(projectId, userId, pageable);
+
+        return pagedResponseMapper.toPagedResponse(tasksPage, TaskResponseDTO.class);
+    }
+
+
 
     // put
     public TaskResponseDTO updateTask(Long id_project, Long id_task, TaskRequestDTO taskRequestDTO, User userFromToken) {
@@ -142,8 +157,8 @@ public class TaskService {
         return project;
     }
 
-    // Métodos para auxiliar
 
+    // Métodos para auxiliar
     // Verificando se o usuário é admin
     private boolean isADM(User user) {
         return user.getRoles().stream().anyMatch(role -> role.getRoleName().equals(ERole.ADMIN));

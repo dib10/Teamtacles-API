@@ -3,6 +3,7 @@ package com.teamtacles.teamtacles_api.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
@@ -11,6 +12,7 @@ import com.teamtacles.teamtacles_api.service.TaskService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +46,13 @@ public class TaskController {
     public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @AuthenticationPrincipal UserAuthenticated authenticatedUser) {
         return ResponseEntity.ok(taskService.getTasksById(id_project, id_task, authenticatedUser.getUser()));
     }   
+
+    @GetMapping("/{projectId}/tasks/user/{userId}")
+    public ResponseEntity<PagedResponse<TaskResponseDTO>> getTasksByUserInProject(@PathVariable Long projectId, @PathVariable Long userId, @AuthenticationPrincipal UserAuthenticated userFromToken, Pageable pageable) {
+        PagedResponse<TaskResponseDTO> response = taskService.getAllTasksFromUserInProject(pageable, projectId, userId, userFromToken.getUser());
+
+        return ResponseEntity.ok(response);
+    }
 
     @PatchMapping("/{id_project}/task/{id_task}/updateStatus")
     public ResponseEntity<TaskResponseDTO> updateStatus(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestPatchDTO taskRequestPatchDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){

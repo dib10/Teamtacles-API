@@ -42,7 +42,7 @@ public class ProjectController {
     @PostMapping
     public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO, authenticatedUser.getUser());
-        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
 
     @GetMapping("/all")
@@ -60,7 +60,7 @@ public class ProjectController {
     ){
         PagedResponse projectsPage = projectService.getAllProjectsFiltered(status, dueDate, projectId, pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
-    }
+    }    
 
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){

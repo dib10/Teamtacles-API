@@ -3,6 +3,7 @@ package com.teamtacles.teamtacles_api.service;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -22,8 +23,10 @@ import com.teamtacles.teamtacles_api.model.enums.Status;
 import com.teamtacles.teamtacles_api.repository.ProjectRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 import java.util.List;
+import java.util.Set;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 @Service
 public class ProjectService {
@@ -40,6 +43,7 @@ public class ProjectService {
         this.pagedResponseMapper = pagedResponseMapper;
     }
 
+    // visualizar todas as tarefas e projetos do SISTEMA, tudo tudo
     public PagedResponse<ProjectResponseDTO> getAllProjects(Pageable pageable, User userFromToken){
         Page<Project> projectsPage;
 
@@ -53,7 +57,6 @@ public class ProjectService {
         }
 
         return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
-
     }
 
     public PagedResponse<ProjectResponseDTO> getAllProjectsFiltered (String status, LocalDateTime dueDate, Long projectId, Pageable pageable, User userFromToken){        
@@ -92,18 +95,23 @@ public class ProjectService {
     public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO, User userFromToken){
         // Busca o usuário criador do projeto
         User creatorUser = findUsers(userFromToken.getUserId());
-        List<User> team = new ArrayList<>();
-        team.add(userFromToken); //associa o usuário criador do projeto ao time
+         // Usar Set para evitar duplicatas
+        List<User> teamList = new ArrayList<>();
 
-        // Busca todos os usuários do time iterativamente
+        // Adiciona os demais membros da requisição
         for (Long userId : projectRequestDTO.getTeam()) {
-            team.add(findUsers(userId));
+            User user = findUsers(userId);
+            teamList.add(user); // Se já estiver no Set, não será adicionado novamente
+        }
+        
+        if (!teamList.contains(creatorUser)) {
+            teamList.add(creatorUser);
         }
         
         Project convertedProject = modelMapper.map(projectRequestDTO, Project.class);
 
         convertedProject.setCreator(creatorUser);
-        convertedProject.setTeam(team);
+        convertedProject.setTeam(teamList);
 
         Project projectCreated = projectRepository.save(convertedProject);
         return modelMapper.map(projectCreated, ProjectResponseDTO.class);

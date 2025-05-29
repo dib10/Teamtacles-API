@@ -32,7 +32,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final PagedResponseMapper pagedResponseMapper;
-    private final ModelMapper modelMapper; // Adicione esta linha
+    private final ModelMapper modelMapper; 
 
 
    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, PagedResponseMapper pagedResponseMapper, ModelMapper modelMapper) {
@@ -40,7 +40,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.pagedResponseMapper = pagedResponseMapper;
-        this.modelMapper = modelMapper; // Adicione esta linha
+        this.modelMapper = modelMapper;
     }
 
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) { 

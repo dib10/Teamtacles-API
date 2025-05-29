@@ -39,6 +39,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erroResponse);
     }
 
+    //400 - quando argumento/parâmetro informado é inválido
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ErrorResponse erroResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid Parameter Value", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erroResponse);
+    }
+
     // 404 - Quando o recurso nao é encontrado
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

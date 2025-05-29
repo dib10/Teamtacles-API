@@ -1,6 +1,9 @@
 package com.teamtacles.teamtacles_api.controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
@@ -44,6 +48,17 @@ public class ProjectController {
     @GetMapping("/all")
     public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         PagedResponse projectsPage = projectService.getAllProjects(pageable, authenticatedUser.getUser());
+        return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
+    }
+
+    @GetMapping("/task/search")
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjectsFiltered(@RequestParam(value = "status", required = false) String status,
+        @RequestParam(value = "dueDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueDate,
+        @RequestParam(value = "projectId", required = false) Long projectId,
+        Pageable pageable, 
+        @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
+        PagedResponse projectsPage = projectService.getAllProjectsFiltered(status, dueDate, projectId, pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
     }
 

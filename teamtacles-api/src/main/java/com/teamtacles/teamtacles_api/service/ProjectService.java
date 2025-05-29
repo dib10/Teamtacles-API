@@ -18,9 +18,11 @@ import com.teamtacles.teamtacles_api.model.Task;
 import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.model.enums.ERole;
+import com.teamtacles.teamtacles_api.model.enums.Status;
 import com.teamtacles.teamtacles_api.repository.ProjectRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 @Service
@@ -52,6 +54,29 @@ public class ProjectService {
 
         return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
 
+    }
+
+    public PagedResponse<ProjectResponseDTO> getAllProjectsFiltered (String status, LocalDateTime dueDate, Long projectId, Pageable pageable, User userFromToken){        
+        //verifica se o status foi encaminhado, se sim, converte para enum
+        Status statusEnum = null;
+        if(status != null){
+            try{
+                statusEnum = Status.valueOf(status);
+            } catch(IllegalArgumentException ex){
+                throw new IllegalArgumentException("Invalid status value: " + status);
+            }
+        }
+
+        Page<Project> projectsList;
+
+        if(isADM(userFromToken)){
+            projectsList = projectRepository.findProjectsFiltered(statusEnum, dueDate, projectId, pageable);
+        }
+        else{
+            projectsList = projectRepository.findProjectsFilteredByUser(statusEnum, dueDate, projectId, userFromToken.getUserId(), pageable);
+        }
+
+        return pagedResponseMapper.toPagedResponse(projectsList, ProjectResponseDTO.class);
     }
 
     public ProjectResponseDTO getProjectById(@PathVariable Long id, User userFromToken){

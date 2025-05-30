@@ -43,8 +43,8 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id_user}/exchangepaper")
-    public ResponseEntity<User> exchangepaperUser(@PathVariable("id_user") Long id, @Valid @RequestBody RoleRequestDTO RoleRequestDTO){
-        User userChanged = userService.exchangepaperUser(id, RoleRequestDTO);
+    public ResponseEntity<UserResponseDTO> exchangepaperUser(@PathVariable("id_user") Long id, @Valid @RequestBody RoleRequestDTO roleRequestDTO){
+        UserResponseDTO userChanged = userService.exchangepaperUser(id, roleRequestDTO);
         return ResponseEntity.status(HttpStatus.OK).body(userChanged);
     }
 

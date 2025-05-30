@@ -68,7 +68,7 @@ public class UserService {
     }
 
     // patch Role
-    public User exchangepaperUser(Long id, RoleRequestDTO roleRequestDTO) {
+    public UserResponseDTO exchangepaperUser(Long id, RoleRequestDTO roleRequestDTO) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User not found."));  
 
@@ -79,7 +79,10 @@ public class UserService {
         user.getRoles().clear(); 
         user.getRoles().add(userNewRole);
 
-        return userRepository.save(user);
+        User updatedUser = userRepository.save(user);
+        UserResponseDTO userResponseDTO = modelMapper.map(updatedUser, UserResponseDTO.class);
+        return userResponseDTO;
+
     }
 
     public PagedResponse<UserResponseDTO> getAllUsers(Pageable pageable) {

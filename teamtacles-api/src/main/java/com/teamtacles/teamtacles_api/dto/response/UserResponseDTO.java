@@ -7,6 +7,8 @@ import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.Role;
 import com.teamtacles.teamtacles_api.model.Task;
 import com.teamtacles.teamtacles_api.model.enums.ERole;
+import com.teamtacles.teamtacles_api.dto.response.RoleResponseDTO; 
+
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,5 +20,5 @@ import lombok.NoArgsConstructor;
 public class UserResponseDTO{
     private String userName;
     private String email;
-    private Set<Role> roles;
+    private Set<RoleResponseDTO> roles;
 }

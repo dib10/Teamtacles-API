@@ -20,6 +20,9 @@ import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.model.enums.ERole;
 import com.teamtacles.teamtacles_api.repository.RoleRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
+import java.util.stream.Collectors; 
+import com.teamtacles.teamtacles_api.dto.response.RoleResponseDTO;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -64,6 +67,17 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         UserResponseDTO userResponseDTO = modelMapper.map(savedUser, UserResponseDTO.class);
+
+        // Mapeia roles para RoleResponseDTO
+        if(savedUser.getRoles() != null) {
+            userResponseDTO.setRoles(
+                savedUser.getRoles().stream()
+                    .map(roleEntity -> modelMapper.map(roleEntity, RoleResponseDTO.class))
+                    .collect(Collectors.toSet())
+            );
+            
+        }
+
         return userResponseDTO;
     }
 
@@ -81,6 +95,17 @@ public class UserService {
 
         User updatedUser = userRepository.save(user);
         UserResponseDTO userResponseDTO = modelMapper.map(updatedUser, UserResponseDTO.class);
+
+        // Mapeia roles para RoleResponseDTO
+        if(updatedUser.getRoles() != null) {
+            userResponseDTO.setRoles(
+                updatedUser.getRoles().stream()
+                    .map(roleEntity -> modelMapper.map(roleEntity, RoleResponseDTO.class))
+                    .collect(Collectors.toSet())
+            );
+        }
+
+        
         return userResponseDTO;
 
     }

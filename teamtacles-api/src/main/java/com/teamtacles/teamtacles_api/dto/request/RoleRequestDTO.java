@@ -17,6 +17,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RoleRequestDTO {
     
-    @NotNull(message = "Role must be ADMIN, USER, or LEADER.")
+    @NotNull(message = "Role must be ADMIN, USER")
     private String role;
 }

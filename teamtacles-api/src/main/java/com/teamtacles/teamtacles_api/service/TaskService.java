@@ -35,13 +35,15 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final ModelMapper modelMapper;
     private final PagedResponseMapper pagedResponseMapper;
 
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository, ProjectRepository projectRepository, ModelMapper modelMapper, PagedResponseMapper pagedResponseMapper){
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, ProjectRepository projectRepository, ProjectService projectService, ModelMapper modelMapper, PagedResponseMapper pagedResponseMapper){
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.modelMapper = modelMapper;
         this.pagedResponseMapper = pagedResponseMapper;
     }
@@ -101,8 +103,10 @@ public class TaskService {
         Status statusEnum = transformStatusToEnum(status);
 
         if(projectId != null){
-            projectRepository.findById(projectId)
+            Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found."));
+
+            projectService.ensureUserCanViewProject(project, userFromToken);
         }
 
         Page<Task> tasksList;
@@ -203,7 +207,7 @@ public class TaskService {
     private Status transformStatusToEnum(String status){
         if(status != null && !status.isEmpty()){
             try{
-                return Status.valueOf(status);
+                return Status.valueOf(status.toUpperCase());
             } catch(IllegalArgumentException ex){
                 throw new IllegalArgumentException("Invalid status value: " + status);
             }

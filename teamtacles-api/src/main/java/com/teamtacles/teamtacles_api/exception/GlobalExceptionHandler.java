@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Validation error", errorMessage);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse); 
         
+    }
+
+    //400 - quando os dados de entrada não são válidos 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        ErrorResponse erroResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid Date format", "The parameter 'dueDate' must be in ISO 8601 format: yyyy-MM-dd'T'HH:mm:ss");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erroResponse);
     }
 
     //400 - quando o json esta mal formatado / invalido

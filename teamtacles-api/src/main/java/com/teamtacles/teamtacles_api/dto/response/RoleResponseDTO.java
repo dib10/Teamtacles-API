@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class RoleResponseDTO {
-    private Long id;
     private ERole roleName;
 }

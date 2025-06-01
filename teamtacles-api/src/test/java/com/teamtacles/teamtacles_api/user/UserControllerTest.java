@@ -1,4 +1,4 @@
-package com.teamtacles.teamtacles_api;
+package com.teamtacles.teamtacles_api.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

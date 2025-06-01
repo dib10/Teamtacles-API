@@ -1,4 +1,4 @@
-package com.teamtacles.teamtacles_api;
+package com.teamtacles.teamtacles_api.project;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

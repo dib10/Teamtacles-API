@@ -1,24 +1,25 @@
 package com.teamtacles.teamtacles_api.exception;
 import org.springframework.security.access.AccessDeniedException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.modelmapper.spi.ErrorMessage;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.validation.FieldError; 
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Logger utilizado para registrar os detalhes completos das exceções no servidor e para permitir o envio de mensagens de erro mais genéricas e seguras ao cliente, evitando assim a exposição de informações sensíveis da aplicação 
+
+    //logger para registrar os erros
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     //400 - quando os dados de entrada não são válidos 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -35,7 +36,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-        ErrorResponse erroResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid formated Json", ex.getMessage());
+        logger.warn("Invalid JSON format: ", ex);
+        String genericErrorMessage = "Invalid JSON format. Please check your request body.";
+        ErrorResponse erroResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid formated Json", genericErrorMessage);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erroResponse);
     }
 
@@ -43,6 +46,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        logger.warn("Invalid Parameter value:", ex);
         ErrorResponse erroResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid Parameter Value", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erroResponse);
     }
@@ -51,6 +55,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException ex) {
+        logger.warn("Username Already Exists: ", ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Username already exists", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
@@ -59,6 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
+        logger.warn("Email Already Exists: ", ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Email already exists", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
@@ -67,6 +73,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PasswordMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handlePasswordMismatchException(PasswordMismatchException ex) {
+        logger.warn("Password Mismatch: {} ", ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Password mismatch", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
@@ -75,6 +82,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        logger.warn("Resource Not Found: ", ex.getMessage());
         ErrorResponse erroResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Resource not found", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erroResponse);
     }
@@ -83,6 +91,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex) {
+        logger.warn("Resource Already Exists: {} ", ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Resource already exists", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse); 
     }
@@ -91,6 +100,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidTaskStateException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleInvalidTaskStateException(InvalidTaskStateException ex){
+        logger.warn("Invalid Task State: ", ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Resource cannot be modified", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
@@ -100,7 +110,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponse> authenticationCredentialsNotFoundExceptionException(AuthenticationCredentialsNotFoundException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), "Unauthorized - User Not Authenticated", ex.getMessage());
+        logger.warn("Authentication Credentials Not Found: ", ex);
+        String genericErrorMessage = "Invalid or missing authentication credentials. Please log in.";
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized - User Not Authenticated", genericErrorMessage);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse); 
     }
 
@@ -108,7 +120,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ResponseEntity<ErrorResponse> accessDeniedExceptionException(AccessDeniedException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Access Forbidden", ex.getMessage());
+        logger.warn("Access Denied: ", ex);
+        String genericErrorMessage = "You do not have permission to access this resource.";
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Access Forbidden", genericErrorMessage);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse); 
     }
 
@@ -116,7 +130,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Our server is not responding, please try again later", ex.getMessage());
+        logger.error("Internal Server Error: ", ex); 
+        String  genericErrorMessage = "An unexpected error occurred. Please try again later.";
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Our server is not responding, please try again later", genericErrorMessage);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse); 
     }
 }

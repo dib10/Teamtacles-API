@@ -25,6 +25,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.test.context.ActiveProfiles;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
+import com.teamtacles.teamtacles_api.exception.InvalidTaskStateException;
 import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
@@ -260,7 +261,106 @@ public class TaskServiceTest {
         verify(modelMapper, times(1)).map(existingTask, TaskResponseDTO.class);
     }
 
-    
+    @Test
+    @DisplayName("2.2: Owner should get their own task by ID successfully")
+    void getTasksById_shouldReturnTask_whenUserIsOwner() {
+        // Arrange
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+
+        // Mock model mapper
+        TaskResponseDTO expectedResponseDTO = new TaskResponseDTO();
+        expectedResponseDTO.setId(existingTask.getId());
+        expectedResponseDTO.setTitle(existingTask.getTitle());
+        when(modelMapper.map(existingTask, TaskResponseDTO.class)).thenReturn(expectedResponseDTO);
+
+        //Act
+        TaskResponseDTO actualResponseDTO = taskService.getTasksById(testProject.getId(), existingTask.getId(), normalUser);
+
+        // Assert
+        assertNotNull(actualResponseDTO, "Response DTO should not be null for owner.");
+        assertEquals(expectedResponseDTO.getId(), actualResponseDTO.getId(), "Task ID should match.");
+        assertEquals(expectedResponseDTO.getTitle(), actualResponseDTO.getTitle(), "Task title should match.");
+        verify(taskRepository, times(1)).findById(existingTask.getId());
+        verify(modelMapper, times(1)).map(existingTask, TaskResponseDTO.class);
+
+
+    }
+
+    @Test
+    @DisplayName("2.3: Responsible user should get task by ID successfully")
+    void getTasksById_shouldReturnTask_whenUserIsResponsible() {
+        //Arrange
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+
+        // Mock model mapper
+        TaskResponseDTO expectedResponseDTO = new TaskResponseDTO();
+        expectedResponseDTO.setId(existingTask.getId());
+        expectedResponseDTO.setTitle(existingTask.getTitle());
+        when(modelMapper.map(existingTask, TaskResponseDTO.class)).thenReturn(expectedResponseDTO);
+
+        //act
+        TaskResponseDTO actualResponseDTO = taskService.getTasksById(testProject.getId(), existingTask.getId(), responsibleUser);
+        // Assert
+        assertNotNull(actualResponseDTO, "Response DTO should not be null for responsible user.");
+        assertEquals(expectedResponseDTO.getId(), actualResponseDTO.getId(), "Task ID should match.");
+        assertEquals(expectedResponseDTO.getTitle(), actualResponseDTO.getTitle(), "Task title should match.");
+
+        verify(taskRepository, times(1)).findById(existingTask.getId());
+        verify(modelMapper, times(1)).map(existingTask, TaskResponseDTO.class);
+
+    }
+
+    @Test
+    @DisplayName("2.4: Should throw ResourceNotFoundException when task ID does not exist")
+    void getTasksById_shouldThrowResourceNotFoundException_whenTaskNotFound() {
+
+        //Arrange
+        Long nonexistentTaskId = 999L;
+
+        when(taskRepository.findById(nonexistentTaskId)).thenReturn(Optional.empty());
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getTasksById(testProject.getId(), nonexistentTaskId, normalUser);
+        });
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    @DisplayName("2.5: Should throw ResourceNotFoundException when task does not belong to the specified project") 
+    void getTasksById_shouldThrowResourceNotFoundException_whenTaskDoesNotBelongToProject() {
+        //usando a existingTask que foi criada no setUp, mas com um projeto diferente
+        Long differentProjectId = 777L; 
+
+        // a tarefa deve ser encontrada, pois o problema não é a tarefa em si, mas sim o projeto ao qual ela pertence
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getTasksById(differentProjectId, existingTask.getId(), normalUser);
+        });
+
+        verify(modelMapper, never()).map(any(), any());
+
+
+    }
+
+    @Test
+    @DisplayName("2.6: Should throw InvalidTaskException when unauthorized user tries to access task by ID")
+    void getTasksById_shouldThrowInvalidTaskException_whenUnauthorizedUserIsNotAuthorized() {
+        // Arrange
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+        // Act & Assert
+        InvalidTaskStateException exception = assertThrows(InvalidTaskStateException.class, () -> {
+            taskService.getTasksById(testProject.getId(), existingTask.getId(), otherUser);
+        });
+        //verifica q o modelMapper não foi chamado, pois o usuário não tem permissão para acessar a tarefa
+        verify(modelMapper, never()).map(any(), any());
+
+    }
+
+
+
+
 
 
 

@@ -49,20 +49,9 @@ public class ProjectController {
     public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         PagedResponse projectsPage = projectService.getAllProjects(pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
-    }
+    }  
 
-    @GetMapping("/task/search")
-    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjectsFiltered(@RequestParam(value = "status", required = false) String status,
-        @RequestParam(value = "dueDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueDate,
-        @RequestParam(value = "projectId", required = false) Long projectId,
-        Pageable pageable, 
-        @AuthenticationPrincipal UserAuthenticated authenticatedUser
-    ){
-        PagedResponse projectsPage = projectService.getAllProjectsFiltered(status, dueDate, projectId, pageable, authenticatedUser.getUser());
-        return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
-    }    
-
-    @PutMapping("/{id}")
+    @PutMapping("/{id}") 
     public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         ProjectResponseDTO responseDTO = projectService.updateProject(id, projectRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);

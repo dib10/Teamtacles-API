@@ -8,6 +8,7 @@ import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
+import com.teamtacles.teamtacles_api.dto.response.TaskResponseFilteredDTO;
 import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
@@ -20,6 +21,8 @@ import com.teamtacles.teamtacles_api.repository.TaskRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 import com.teamtacles.teamtacles_api.exception.InvalidTaskStateException;
 
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -94,8 +97,24 @@ public class TaskService {
         return pagedResponseMapper.toPagedResponse(tasksPage, TaskResponseDTO.class);
     }
 
+    public PagedResponse<TaskResponseFilteredDTO> getAllTasksFiltered(String status, LocalDateTime dueDate, Long projectId, Pageable pageable, User userFromToken){        
+        Status statusEnum = transformStatusToEnum(status);
 
+        if(projectId != null){
+            projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found."));
+        }
 
+        Page<Task> tasksList;
+        if(isADM(userFromToken)){
+            tasksList = taskRepository.findTasksFiltered(statusEnum, dueDate, projectId, pageable);
+        }
+        else{
+            tasksList = taskRepository.findTasksFilteredByUser(statusEnum, dueDate, projectId, userFromToken.getUserId(), pageable);
+        }
+        return pagedResponseMapper.toPagedResponse(tasksList, TaskResponseFilteredDTO.class);
+    }
+    
     // put
     public TaskResponseDTO updateTask(Long id_project, Long id_task, TaskRequestDTO taskRequestDTO, User userFromToken) {
         Task task = taskRepository.findById(id_task)
@@ -179,5 +198,16 @@ public class TaskService {
         if(!(task.getProject().getId() == id_project)){
             throw new ResourceNotFoundException("Task does not belong to the specified project.");
         }
+    }
+
+    private Status transformStatusToEnum(String status){
+        if(status != null && !status.isEmpty()){
+            try{
+                return Status.valueOf(status);
+            } catch(IllegalArgumentException ex){
+                throw new IllegalArgumentException("Invalid status value: " + status);
+            }
+        } 
+        return null;
     }
 }

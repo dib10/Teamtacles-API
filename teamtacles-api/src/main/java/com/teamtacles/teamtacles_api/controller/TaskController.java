@@ -6,14 +6,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
+import com.teamtacles.teamtacles_api.dto.response.TaskResponseFilteredDTO;
+import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.service.TaskService;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
@@ -53,6 +58,17 @@ public class TaskController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/task/search")
+    public ResponseEntity<PagedResponse<TaskResponseFilteredDTO>> getAllTasksFiltered(@RequestParam(value = "status", required = false) String status,
+        @RequestParam(value = "dueDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueDate,
+        @RequestParam(value = "projectId", required = false) Long projectId,
+        Pageable pageable, 
+        @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
+        PagedResponse tasksPage = taskService.getAllTasksFiltered(status, dueDate, projectId, pageable, authenticatedUser.getUser());
+        return ResponseEntity.status(HttpStatus.OK).body(tasksPage);
+    }  
 
     @PatchMapping("/{id_project}/task/{id_task}/updateStatus")
     public ResponseEntity<TaskResponseDTO> updateStatus(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestPatchDTO taskRequestPatchDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){

@@ -20,26 +20,4 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
     Page<Project> findByCreator(User creator, Pageable pageable);
     Page<Project> findById(Long id, Pageable pageable);
     Page<Project> findByTeam(User user, Pageable pageable);
-    
-    // Método para buscas personalizadas em JPQL - filtro
-    @Query("""
-        SELECT DISTINCT p FROM Project p
-        JOIN p.tasks t
-        LEFT JOIN t.usersResponsability ur
-        WHERE (:statusEnum IS NULL OR t.status = :statusEnum)
-        AND (:dueDate IS NULL OR t.dueDate <= :dueDate)
-        AND (:projectId IS NULL OR p.id = :projectId)
-        AND (:userId IS NULL OR (t.owner.id = :userId OR ur.id = :userId))
-        """)
-    Page<Project> findProjectsFilteredByUser(Status statusEnum, LocalDateTime dueDate, Long projectId, Long userId, Pageable pageable);
-
-    // Método para buscas personalizadas em JPQL - filtro
-    @Query("""
-        SELECT DISTINCT p FROM Project p
-        JOIN p.tasks t
-        WHERE (:statusEnum IS NULL OR t.status = :statusEnum)
-        AND (:dueDate IS NULL OR t.dueDate <= :dueDate)
-        AND (:projectId IS NULL OR p.id = :projectId)
-        """)
-    Page<Project> findProjectsFiltered(Status statusEnum, LocalDateTime dueDate, Long projectId, Pageable pageable);
 }

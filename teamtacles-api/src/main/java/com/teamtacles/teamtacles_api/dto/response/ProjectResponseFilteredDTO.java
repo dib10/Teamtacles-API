@@ -12,13 +12,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectResponseDTO {
+public class ProjectResponseFilteredDTO {
     private Long id;
     private String title;
     private String description;
-    private List<TaskResponseDTO> tasks;
-    private UserResponseDTO creator;
-    private List<UserResponseDTO> team;
 }
-
-

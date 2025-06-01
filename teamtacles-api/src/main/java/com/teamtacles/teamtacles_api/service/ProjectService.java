@@ -114,7 +114,7 @@ public class ProjectService {
     public ProjectResponseDTO partialUpdateProject(Long id, ProjectRequestPatchDTO projectRequestPatchDTO, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
-            // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+            // Chama o método que verifica se o usuário é dono do projeto ou se é um administrador
         ensureUserCanModifyProject(project, userFromToken);
 
         modelMapper.map(projectRequestPatchDTO, project);

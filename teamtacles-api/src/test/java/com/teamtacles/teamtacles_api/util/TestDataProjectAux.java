@@ -21,8 +21,8 @@ public class TestDataProjectAux {
 
     public void setUpTestProject() {
         Project project = new Project();
-        project.setTitle("Projeto API Backend");
-        project.setDescription("Projeto de exemplo para integração com frontend");
+        project.setTitle("API Project");
+        project.setDescription("Team task management API");
         project.setTeam(List.of(testDataAux.getNormalUser()));
         project.setCreator(testDataAux.getNormalUser());
         this.project = projectRepository.save(project);

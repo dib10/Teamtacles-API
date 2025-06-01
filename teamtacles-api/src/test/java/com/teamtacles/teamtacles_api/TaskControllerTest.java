@@ -9,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
@@ -20,7 +19,6 @@ import com.teamtacles.teamtacles_api.repository.TaskRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 import com.teamtacles.teamtacles_api.util.TestDataAux;
 import com.teamtacles.teamtacles_api.util.TestDataProjectAux;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;

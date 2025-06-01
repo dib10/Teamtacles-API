@@ -48,10 +48,10 @@ public class UserService {
 
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) { 
         if(userRepository.existsByUserName(userRequestDTO.getUserName())){
-            throw new UsernameAlreadyExistsException("Username already exists"); 
+            throw new UsernameAlreadyExistsException("Username/email already exists"); 
         }
         if(userRepository.existsByEmail(userRequestDTO.getEmail())){
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException("Username/email already exists");
         }
         if(!userRequestDTO.getPassword().equals(userRequestDTO.getPasswordConfirm())){
             throw new PasswordMismatchException("Password and confirmation don't match");

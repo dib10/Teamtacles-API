@@ -59,34 +59,11 @@ public class ProjectService {
         return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
     }
 
-    public PagedResponse<ProjectResponseDTO> getAllProjectsFiltered (String status, LocalDateTime dueDate, Long projectId, Pageable pageable, User userFromToken){        
-        //verifica se o status foi encaminhado, se sim, converte para enum
-        Status statusEnum = null;
-        if(status != null){
-            try{
-                statusEnum = Status.valueOf(status);
-            } catch(IllegalArgumentException ex){
-                throw new IllegalArgumentException("Invalid status value: " + status);
-            }
-        }
-
-        Page<Project> projectsList;
-
-        if(isADM(userFromToken)){
-            projectsList = projectRepository.findProjectsFiltered(statusEnum, dueDate, projectId, pageable);
-        }
-        else{
-            projectsList = projectRepository.findProjectsFilteredByUser(statusEnum, dueDate, projectId, userFromToken.getUserId(), pageable);
-        }
-
-        return pagedResponseMapper.toPagedResponse(projectsList, ProjectResponseDTO.class);
-    }
-
     public ProjectResponseDTO getProjectById(@PathVariable Long id, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyTask(project, userFromToken);
+        ensureUserCanViewProject(project, userFromToken);
 
         return modelMapper.map(project, ProjectResponseDTO.class);
     }
@@ -122,7 +99,7 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyTask(project, userFromToken);
+        ensureUserCanModifyProject(project, userFromToken);
 
         modelMapper.map(projectRequestDTO, project);
         project.setId(id);
@@ -138,7 +115,7 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyTask(project, userFromToken);
+        ensureUserCanModifyProject(project, userFromToken);
 
         modelMapper.map(projectRequestPatchDTO, project);
         project.setId(id);
@@ -154,9 +131,16 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyTask(project, userFromToken);
+        ensureUserCanModifyProject(project, userFromToken);
         
         projectRepository.delete(project);
+    }
+
+    // Método para verificar se o usuário pode visualizar o projeto
+    public void ensureUserCanViewProject(Project project, User user) {
+        if (!isADM(user) && !project.getTeam().contains(user)) {
+            throw new AccessDeniedException("You do not have permission to access this resource.");    
+        } 
     }
 
     private User findUsers(Long id){
@@ -172,8 +156,8 @@ public class ProjectService {
     }
 
     // Validando se o usuário é dono do projeto, se ele não for adm, ele não consegue criar, editar ou deletar tarefas de outros usuários
-    private void ensureUserCanModifyTask(Project project, User user) {
-        if(!isADM(user) && !project.getId().equals(user.getUserId())) {
+    private void ensureUserCanModifyProject(Project project, User user) {
+        if(!isADM(user) && !project.getCreator().getUserId().equals(user.getUserId())) {
             throw new InvalidTaskStateException (" You do not have permission to modify this project."); 
         }
     }

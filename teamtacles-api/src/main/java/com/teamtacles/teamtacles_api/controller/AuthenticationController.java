@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.teamtacles.teamtacles_api.dto.authentication.AuthenticationDTO;
 import com.teamtacles.teamtacles_api.service.AuthenticationService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,6 +24,11 @@ public class AuthenticationController {
         this.authenticationService = authenticationService;
     }
 
+    @Operation(summary = "Authenticate User", description = "Authenticates a user using the provided username and password, and returns a JWT token.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Authentication successful, returns JWT token."),
+        @ApiResponse(responseCode = "404", description = "NOT FOUND: Muser not found.")
+    })
     @PostMapping("authenticate")
     public String authenticate(@RequestBody AuthenticationDTO request) {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword());

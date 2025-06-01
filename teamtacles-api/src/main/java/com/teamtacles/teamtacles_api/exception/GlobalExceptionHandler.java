@@ -30,11 +30,10 @@ public class GlobalExceptionHandler {
         
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Validation error", errorMessage);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse); 
-        
     }
 
     //400 - quando os dados de entrada não são válidos 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
         ErrorResponse erroResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid Date format", "The parameter 'dueDate' must be in ISO 8601 format: yyyy-MM-dd'T'HH:mm:ss");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erroResponse);

@@ -174,6 +174,7 @@ public class UserServiceTest {
         Role userRoleReturned = new Role();
         userRoleReturned.setId(2L);
         userRoleReturned.setRoleName(ERole.ADMIN);
+        existingUser.setRoles(new HashSet<>(Set.of(userRoleReturned)));
 
         User savedNewUser = new User();
         savedNewUser.setUserName(existingUser.getUserName());

@@ -94,8 +94,6 @@ public class TaskService {
         return pagedResponseMapper.toPagedResponse(tasksPage, TaskResponseDTO.class);
     }
 
-
-
     // put
     public TaskResponseDTO updateTask(Long id_project, Long id_task, TaskRequestDTO taskRequestDTO, User userFromToken) {
         Task task = taskRepository.findById(id_task)

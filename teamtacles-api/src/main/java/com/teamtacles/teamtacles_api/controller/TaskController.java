@@ -57,7 +57,7 @@ public class TaskController {
     @PatchMapping("/{id_project}/task/{id_task}/updateStatus")
     public ResponseEntity<TaskResponseDTO> updateStatus(@PathVariable("id_project") Long id_project, @PathVariable("id_task") Long id_task, @Valid @RequestBody TaskRequestPatchDTO taskRequestPatchDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         TaskResponseDTO taskResponseDTO = taskService.updateStatus(id_project, id_task, taskRequestPatchDTO, authenticatedUser.getUser());
-        return ResponseEntity.status(HttpStatus.CREATED).body(taskResponseDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(taskResponseDTO);
     }
 
     @PutMapping("/{id_project}/task/{id_task}")

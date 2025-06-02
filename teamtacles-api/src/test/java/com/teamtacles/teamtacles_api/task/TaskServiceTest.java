@@ -392,18 +392,17 @@ public class TaskServiceTest {
 
     }
 
-    @Test
-    @DisplayName("2.6: Should throw InvalidTaskException when unauthorized user tries to access task by ID")
-    void getTasksById_shouldThrowInvalidTaskException_whenUnauthorizedUserIsNotAuthorized() {
+        @Test
+        @DisplayName("2.6: Should throw AccessDeniedException when unauthorized user tries to access task by ID")
+        void getTasksById_shouldThrowAccessDeniedException_whenUnauthorizedUserIsNotAuthorized() { 
         // Arrange
         when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
         // Act & Assert
-        InvalidTaskStateException exception = assertThrows(InvalidTaskStateException.class, () -> {
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> { 
             taskService.getTasksById(testProject.getId(), existingTask.getId(), otherUser);
         });
-        //verifica q o modelMapper não foi chamado, pois o usuário não tem permissão para acessar a tarefa
+        //verificando q o modelMapper não foi chamado, pois o usuário não tem permissão para acessar a tarefa
         verify(modelMapper, never()).map(any(), any());
-
     }
 
     @Test
@@ -452,24 +451,28 @@ public class TaskServiceTest {
     }
 
     @Test
-    @DisplayName("3.2: Should throw AcessDeniedException when a non-admin user tries to get tasks from another user in a project")
+    @DisplayName("3.2: Should throw AccessDeniedException when a non-admin user tries to get tasks from another user in a project")
     void getAllTasksFromUserInProject_shouldThrowAccessDeniedException_whenUserIsNotAdmin() {
-        //Arrange
-        Long projectIdToSearch = testProject.getId();
-        Long userIdToSearchTasksFor = responsibleUser.getUserId();
-        Pageable pageable = PageRequest.of(0, 10);
+    //Arrange
+    Long projectIdToSearch = testProject.getId();
+    Long userIdToSearchTasksFor = responsibleUser.getUserId();
+    Pageable pageable = PageRequest.of(0, 10);
 
-        //Act & Assert
-        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
-            taskService.getAllTasksFromUserInProject(pageable, projectIdToSearch, userIdToSearchTasksFor, normalUser);
-        });
+    when(projectRepository.findById(projectIdToSearch)).thenReturn(Optional.of(testProject));
+    when(userRepository.findById(userIdToSearchTasksFor)).thenReturn(Optional.of(responsibleUser));
 
-        verify(projectRepository, never()).findById(anyLong());
-        verify(userRepository, never()).findById(anyLong()); // para o usuário alvo da busca
-        verify(taskRepository, never()).findByProjectIdAndUsersResponsabilityId(anyLong(), anyLong(), any(Pageable.class));
-        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+    //Act & Assert
+    AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+        taskService.getAllTasksFromUserInProject(pageable, projectIdToSearch, userIdToSearchTasksFor, normalUser);
+    });
 
-    }
+    assertEquals("FORBIDDEN - You do not have permission to access this user's tasks.", exception.getMessage());
+
+    verify(projectRepository, times(1)).findById(projectIdToSearch);
+    verify(userRepository, times(1)).findById(userIdToSearchTasksFor);
+    verify(taskRepository, never()).findByProjectIdAndUsersResponsabilityId(anyLong(), anyLong(), any(Pageable.class));
+    verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+}
 
     @Test
     @DisplayName("3.3: Should throw ResourceNotFoundException when project is not found (admin acess)")

@@ -1,5 +1,6 @@
 package com.teamtacles.teamtacles_api.project;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -72,6 +73,9 @@ public class ProjectControllerTest {
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("API Project"));
+
+        var projects = projectRepository.findAll();
+        assertFalse(projects.isEmpty(), "Project list should not be empty after creation");
     }
 
     @Test

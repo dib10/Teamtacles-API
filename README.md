@@ -374,14 +374,23 @@ Além disso, realizamos o isolamento dos testes com o uso do `@BeforeEach`, gara
 
 **🆕 Criação de Task**
 - ✅ Deve criar uma task e retornar 201 Created.
+- ❌ Deve retornar 404 not found quando o projeto não existir.
+- ❌ Deve retornar 404 not found quando o ID do usuário responsável não existir.
 
 **📄 Consulta de Task por ID**
 - ✅ ADMIN deve conseguir buscar uma task pelo ID, retornando 200 OK.
+- ✅ USER responsável deve conseguir buscar uma task pelo ID, retornando 200 OK.
+- ✅ USER criador deve conseguir buscar uma task pelo ID, retornando 200 OK.
 - ❌ Usuário não responsável deve ser proibido de acessar a task, retornando 403 Forbidden.
+- ❌ Deve retornar 404 not found quando a task não existir pelo ID
+- ❌ Deve retornar 404 not found quando a task não pertencer ao projeto especificado. 
 
-**👥 Listagem de Tasks por Usuário**
-- ✅ ADMIN deve conseguir listar tasks de um usuário, retornando 200 OK.
-- ❌ Usuário comum não pode listar suas próprias tasks via endpoint admin, retornando 403 Forbidden.
+**👥 Listagem de Tasks por Projeto e Usuário**
+- ✅ ADMIN deve conseguir listar de forma paginada as tasks de um usuário, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden quando usuário não admin tentar acessar tasks de outro usuário.
+- ✅ Usuário comum pode listar de forma paginada suas próprias tasks via endpoint, retornando 200 OK.
+- ❌ Deve retornar 404 Not Found quando o quando o projeto não existir.
+- ❌ Deve retornar 404 Not Found quando o quando o usuário não existir.
 
 **✏️ Atualização Parcial (PATCH)**
 - ✅ ADMIN pode atualizar parcialmente o status da task, retornando 200 OK.

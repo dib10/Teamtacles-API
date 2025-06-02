@@ -89,9 +89,6 @@ public class TaskService {
     }
     
     public PagedResponse<TaskResponseDTO> getAllTasksFromUserInProject(Pageable pageable, Long projectId, Long userId, User userFromToken) {
-        if (!isADM(userFromToken)) {
-            throw new AccessDeniedException("Access Forbidden");
-        }
         // Verifica se o projeto existe
         projectRepository.findById(projectId)
             .orElseThrow(() -> new ResourceNotFoundException("Project not found."));
@@ -100,11 +97,21 @@ public class TaskService {
         userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
-        Page<Task> tasksPage = taskRepository
-            .findByProjectIdAndUsersResponsabilityId(projectId, userId, pageable);
+        Page<Task> tasksPage;
 
-        return pagedResponseMapper.toPagedResponse(tasksPage, TaskResponseDTO.class);
-    }
+        if (isADM(userFromToken)) {
+            tasksPage = taskRepository.findByProjectIdAndUsersResponsabilityId(projectId, userId, pageable);
+        } else if (!userFromToken.getUserId().equals(userId)) {
+            // Não ADM tentando acessar dados de outro user
+            throw new AccessDeniedException("FORBIDDEN - You do not have permission to access this user's tasks.");
+        } else {
+            // Normal user: pode buscar suas tasks no projeto
+            tasksPage = taskRepository.findByProjectIdAndUsersResponsabilityId(projectId, userId, pageable);
+        }
+
+    return pagedResponseMapper.toPagedResponse(tasksPage, TaskResponseDTO.class);
+}
+
 
     public PagedResponse<TaskResponseFilteredDTO> getAllTasksFiltered(String status, LocalDateTime dueDate, Long projectId, Pageable pageable, User userFromToken){        
         Status statusEnum = transformStatusToEnum(status);

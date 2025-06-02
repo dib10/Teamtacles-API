@@ -78,11 +78,44 @@ public class TaskControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Review project documentation"));
+                .andExpect(jsonPath("$.title").value("Review project documentation"))
+                .andExpect(jsonPath("$.status").value("TODO"));
 
         var tasks = taskRepository.findAll();
         assertFalse(tasks.isEmpty(), "Task list should not be empty after creation");
         assertEquals(testDataAux.getNormalUser().getUserId(), tasks.get(0).getOwner().getUserId(), "Task should be assigned to the correct user");   
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating task in non-existent project return 404")
+    void testCreateTask_WhenProjectDoesntExists_ShouldReturn404() throws Exception {
+        TaskRequestDTO dto = new TaskRequestDTO();
+        dto.setTitle("Review project documentation");
+        dto.setDescription("Check if the API documentation is updated");
+        dto.setDueDate(LocalDateTime.now().plusDays(5));
+        dto.setUsersResponsability(List.of(testDataAux.getNormalUser().getUserId()));
+
+        mockMvc.perform(post("/api/project/{project_id}/task", 10) //id do projeto não existe
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when setting a team where user doesnt exists - return 404")
+    void testCreateTask_WhenUserIdInTeamDoesntExists_ShouldReturn404() throws Exception {
+        TaskRequestDTO dto = new TaskRequestDTO();
+        dto.setTitle("Review project documentation");
+        dto.setDescription("Check if the API documentation is updated");
+        dto.setDueDate(LocalDateTime.now().plusDays(5));
+        dto.setUsersResponsability(List.of(10L)); // usuário não existente no sistema
+
+        mockMvc.perform(post("/api/project/{project_id}/task", testDataProjectAux.getProject().getId())
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound());  
     }
 
     @Test
@@ -98,6 +131,19 @@ public class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Should return task by ID when User Responsible/Creator with 200 OK")
+    void testGetTaskById_WhenUser_ShouldReturn200() throws Exception {
+        Task savedTask = createUserTask(); // user is the creator and responsible
+
+        mockMvc.perform(get("/api/project/{id_project}/task/{id_task}", testDataProjectAux.getProject().getId(), savedTask.getId())
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Review project documentation"));
+    }
+
+
+    @Test
     @DisplayName("Should forbid access to task by ID when not responsible with 403 FORBIDDEN")
     void testGetTaskById_WhenUserNotResponsible_ShouldReturn403() throws Exception {
         Task savedTask = createAdminTask();
@@ -109,24 +155,83 @@ public class TaskControllerTest {
     }
 
     @Test
-    @DisplayName("Should return tasks by user ID as Admin with 200 OK")
+    @DisplayName("Should throw exception when task by ID doesnt exists 404 Not Found")
+    void testGetTaskById_WhenIdDoesntExists_ShouldReturn404() throws Exception {
+        mockMvc.perform(get("/api/project/{id_project}/task/{id_task}", testDataProjectAux.getProject().getId(), 5)
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+    
+    @Test
+    @DisplayName("Should throw an exception when task by ID does not exist in the specified project 404 Not Found")
+    void testGetTaskById_WhenIdDoesntExistsInProject_ShouldReturn404() throws Exception {
+        Task savedTask = createUserTask();
+
+        mockMvc.perform(get("/api/project/{id_project}/task/{id_task}", 10, savedTask.getId()) // projeto não existe
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should return tasks by user ID as admin with 200 OK")
     void testGetTasksByUserId_WhenAdmin_ShouldReturn200() throws Exception {
         Task savedTask = createUserTask();
 
-        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}", testDataProjectAux.getProject().getId(), testDataAux.getNormalUser().getUserId())
+        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}?page=0&size=10", testDataProjectAux.getProject().getId(), testDataAux.getNormalUser().getUserId())
                 .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Review project documentation"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+    }
+
+    @Test
+    @DisplayName("Should forbid user from getting others tasks with 403 FORBIDDEN")
+    void testGetTasksByUserId_FromAnotherUser_ShouldReturn403() throws Exception {
+        Task savedTask = createAdminTask();
+
+        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}", testDataProjectAux.getProject().getId(), testDataAux.getAdminUser().getUserId())
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken())) // tentando acessar as tasks de outro usuario
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+    
+    @Test
+    @DisplayName("Should list tasks under my responsability or creation")
+    void testGetTasksByUserId_WhenUserResponsible_ShouldReturn200() throws Exception {
+        Task savedTask = createUserTask();
+
+        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}", testDataProjectAux.getProject().getId(), testDataAux.getNormalUser().getUserId())
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].title").value("Review project documentation"));
     }
 
     @Test
-    @DisplayName("Should forbid user from getting their own tasks with 403 FORBIDDEN")
-    void testGetTasksByUserId_WhenUser_ShouldReturn403() throws Exception {
-        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}", testDataProjectAux.getProject().getId(), testDataAux.getNormalUser().getUserId())
-                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+    @DisplayName("Should throw exception when tries to search for tasks with invalid project ID with 404 OK")
+    void testGetTasksByUserId_WhenInvalidProjectId_ShouldReturn404() throws Exception {
+        Task savedTask = createUserTask();
+
+        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}?page=0&size=10", 14, testDataAux.getNormalUser().getUserId()) // id do projeto inválido
+                .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
                 .andDo(print())
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when tries to search for user with invalid user ID with 404 OK")
+    void testGetTasksByUserId_WhenInvalidUserId_ShouldReturn404() throws Exception {
+        Task savedTask = createUserTask();
+
+        mockMvc.perform(get("/api/project/{project_id}/tasks/user/{user_id}", testDataProjectAux.getProject().getId(), 10)
+                .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
+                .andDo(print())
+                .andExpect(status().isNotFound());
     }
 
     @Test

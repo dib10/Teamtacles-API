@@ -106,12 +106,14 @@ public class TaskController {
         @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
     })
     @GetMapping("/task/search")
-    public ResponseEntity<PagedResponse<TaskResponseFilteredDTO>> getAllTasksFiltered(@RequestParam(value = "status", required = false) @Parameter(description = "Filter tasks by status") String status,
-        @RequestParam(value = "dueDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Parameter(description = "Filter tasks by dueDate") LocalDateTime dueDate,
-        @RequestParam(value = "projectId", required = false) @Parameter(description = "Filter tasks by Project ID") Long projectId,
-        @Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, 
-        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
-    ){
+    public ResponseEntity<PagedResponse<TaskResponseFilteredDTO>> getAllTasksFiltered(@RequestParam(value = "status", required = false) 
+                                                                                    @Parameter(description = "Filter tasks by status") String status,
+                                                                                    @RequestParam(value = "dueDate", required = false) 
+                                                                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) 
+                                                                                    @Parameter(description = "Filter tasks by dueDate") LocalDateTime dueDate,
+                                                                                    @RequestParam(value = "projectId", required = false) @Parameter(description = "Filter tasks by Project ID") Long projectId,
+                                                                                    @Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, 
+                                                                                    @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         PagedResponse tasksPage = taskService.getAllTasksFiltered(status, dueDate, projectId, pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(tasksPage);
     }  

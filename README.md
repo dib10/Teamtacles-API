@@ -10,15 +10,15 @@ O **Teamtacles-API** é uma API RESTful desenvolvida utilizando **Java, Spring B
 A API visa **auxiliar o gerenciamento de tarefas em equipe**, promovendo a colaboração e a produtividade durante a realização de projetos. O **Teamtacles-API** é ideal para times que estão se sentindo **afogados no mar de tarefas** e desejam o **apoio de tentáculos** na organização e gerenciamento, tornando o fluxo de trabalho mais **eficiente e colaborativo**.
 
 ## Sobre as profundezas 
-- [✨ Funcionalidades Ancoradas](#funcionalidades-ancoradas)
-- [🏝️ Mergulho Local: Como Executar](#mergulho-local-como-executar)
-- [🦑 Tentáculos Autorizados: Como Obter o Token e Testar](#tentaculos-autorizados-como-obter-o-token-e-testar)
-- [🌊 Mapa dos Dados: Estruturas e Validações](#mapa-dos-dados-estruturas-e-validacoes)
-- [🛡️ Rede de Proteção: Autenticação e Autorização](#rede-de-protecao-autenticacao-e-autorizacao)
-- [🌊 Correntes de Testes: Validação das Funcionalidades](#correntes-de-testes-validacao-das-funcionalidades)
+- [✨ Funcionalidades Ancoradas](#-funcionalidades-ancoradas)
+- [🏝️ Mergulho Local: Como Executar](#-mergulho-local-como-executar)
+- [🦑 Tentáculos Autorizados: Como Obter o Token e Testar](#-tentaculos-autorizados-como-obter-o-token-e-testar)
+- [🌊 Mapa dos Dados: Estruturas e Validações](#-mapa-dos-dados-estruturas-e-validacoes)
+- [🛡️ Rede de Proteção: Autenticação e Autorização](#-rede-de-protecao-autenticacao-e-autorizacao)
+- [🌊 Correntes de Testes: Validação das Funcionalidades](#-correntes-de-testes-validacao-das-funcionalidades)
 
 ## ✨ Funcionalidades Ancoradas
-
+A documentação completa da API está disponível via Swagger em: http://localhost:8080/swagger-ui.html
 
 **🔐 Autenticação e Autorização**
 - Cadastro de usuários com nome, e-mail e senha;
@@ -327,82 +327,91 @@ Além disso, realizamos o isolamento dos testes com o uso do `@BeforeEach`, gara
 - ❌ Deve retornar 400 Bad Request se as senhas não coincidirem.
 
 **🔐 Atualização de Permissão**
-- ✅ Deve permitir que um administrador atualize a permissão (role) de um usuário, retornando 200 OK.
-- ❌ Deve proibir que um usuário comum altere permissões, retornando 403 Forbidden.
+- ✅ Deve, como ADMIN, permitir atualizar a permissão (role) de um usuário, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden se um usuário comum tentar alterar permissões.
 - ❌ Deve retornar 400 Bad Request se a role informada for inválida.
 
 **📄 Listagem de Usuários**
-- ✅ Deve permitir que um administrador consulte a lista paginada de todos os usuários.
-- ❌ Deve proibir a listagem de todos os usuários quando o não tiver perfil de administrador (403 Forbidden).
-- ❌ Deve negar o acesso a usuários não autenticados (401 Unauthorized).
+- ✅ Deve, como ADMIN, consultar a lista paginada de todos os usuários.
+- ❌ Deve retornar 403 Forbidden ao tentar listar usuários sem perfil de administrador.
+- ❌ Deve retornar 401 Unauthorized para usuários não autenticados.
 
 ### ProjectControllerTest
 **Cenários Testados**
 
 **🆕 Criação de Projeto**
-- ✅ Deve criar um projeto com usuário comum, retornando 201 Created.
-- ❌ Deve retornar 404 not found quando algum usuário da equipe não for encontrado.
+- ✅ Deve, como USER/ADMIN comum, criar um projeto, retornando 201 Created.
+- ❌ Deve retornar 404 Not Found quando algum usuário da equipe não for encontrado.
 - ❌ Deve retornar 400 Bad Request se o campo obrigatório "título" estiver vazio.
 - ❌ Deve retornar 400 Bad Request se o campo obrigatório "time" estiver vazio.
 
 **📋 Listagem de Projetos**
-- ✅ Deve listar todos os projetos para ADMIN, retornando 200 OK.
-- ✅ Deve retornar apenas a lista de todos os projetos que o usuário participa.
-- ✅ Deve listar qualquer projeto existente filtrado pelo ID para o ADMIN, retornando 200 OK.
-- ❌ Deve retornar 404 Not found quando o projeto não for encontrado pelo ID.
-- ❌ Deve retornar 403 Forbidden quando o usuário tentar acessar um projeto por ID do qual não faz parte.
+- ✅ Deve, como ADMIN, listar todos os projetos, retornando 200 OK.
+- ✅ Deve, como USER, listar os projetos que participa.
+- ✅ Deve, como ADMIN, listar qualquer projeto existente filtrado pelo ID, retornando 200 OK.
+- ❌ Deve retornar 404 Not Found quando o projeto não for encontrado pelo ID.
+- ❌ Deve retornar 403 Forbidden quando o usuário tentar acessar projeto pelo ID do qual não faz parte.
 
 **✏️ Atualização Parcial (PATCH)**
-- ✅ Deve permitir que ADMIN atualize parcialmente um projeto, retornando 200 OK.
-- ✅ Deve atualizar um projeto quando o usuário for o dono, retornando 200 OK.
-- ❌ Deve proibir atualização parcial por usuário comum que está na equipe, retornando 403 Forbidden.
-- ❌ Deve proibir atualização parcial por usuário comum que não está na equipe, retornando 403 Forbidden.
+- ✅ Deve, como ADMIN, permitir atualização parcial do projeto, retornando 200 OK.
+- ✅ Deve permitir que o usuário dono atualize parcialmente o projeto, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden para usuário comum da equipe ao tentar atualização parcial.
+- ❌ Deve retornar 403 Forbidden para usuário comum que não está na equipe ao tentar atualização parcial.
 
 **📝 Atualização Completa (PUT)**
-- ✅ Deve permitir que ADMIN atualize completamente um projeto, retornando 200 OK.
-- ✅ Deve permitir que Usuário dono atualize completamente um projeto, retornando 200 OK.
-- ❌ Deve proibir atualização completa por usuário comum que não é criador, retornando 403 Forbidden.
+- ✅ Deve, como ADMIN, permitir atualização completa do projeto, retornando 200 OK.
+- ✅ Deve permitir que usuário dono atualize completamente o projeto, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden para usuário comum que não é criador ao tentar atualização completa.
 
 **🗑️ Exclusão de Projeto (DELETE)**
-- ✅ Deve permitir que ADMIN exclua um projeto, retornando 204 No Content.
+- ✅ Deve, como ADMIN, excluir projeto, retornando 204 No Content.
 - ✅ Deve permitir que usuário dono exclua seus projetos, retornando 204 No Content.
-- ❌ Deve proibir exclusão por usuário comum que não é criador, retornando 403 Forbidden.
-
+- ❌ Deve retornar 403 Forbidden para usuário comum que não é criador ao tentar exclusão.
 
 ### TaskControllerTest
 **Cenários Testados**
 
 **🆕 Criação de Task**
 - ✅ Deve criar uma task e retornar 201 Created.
-- ❌ Deve retornar 404 not found quando o projeto não existir.
-- ❌ Deve retornar 404 not found quando o ID do usuário responsável não existir.
+- ❌ Deve retornar 404 Not Found quando o projeto não existir.
+- ❌ Deve retornar 404 Not Found quando o ID do usuário responsável não existir.
 
 **📄 Consulta de Task por ID**
-- ✅ ADMIN deve conseguir buscar uma task pelo ID, retornando 200 OK.
-- ✅ USER responsável deve conseguir buscar uma task pelo ID, retornando 200 OK.
-- ✅ USER criador deve conseguir buscar uma task pelo ID, retornando 200 OK.
-- ❌ Usuário não responsável deve ser proibido de acessar a task, retornando 403 Forbidden.
-- ❌ Deve retornar 404 not found quando a task não existir pelo ID
-- ❌ Deve retornar 404 not found quando a task não pertencer ao projeto especificado. 
+- ✅ Deve, como ADMIN, buscar task pelo ID, retornando 200 OK.
+- ✅ Deve, como USER responsável, buscar task pelo ID, retornando 200 OK.
+- ✅ Deve, como USER criador, buscar task pelo ID, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden para usuário não responsável pela task.
+- ❌ Deve retornar 404 Not Found quando a task não existir pelo ID.
+- ❌ Deve retornar 404 Not Found quando a task não pertencer ao projeto
 
 **👥 Listagem de Tasks por Projeto e Usuário**
-- ✅ ADMIN deve conseguir listar de forma paginada as tasks de um usuário, retornando 200 OK.
+- ✅ Deve, como ADMIN, listar tasks de um usuário de forma paginada, retornando 200 OK.
 - ❌ Deve retornar 403 Forbidden quando usuário não admin tentar acessar tasks de outro usuário.
-- ✅ Usuário comum pode listar de forma paginada suas próprias tasks via endpoint, retornando 200 OK.
-- ❌ Deve retornar 404 Not Found quando o quando o projeto não existir.
-- ❌ Deve retornar 404 Not Found quando o quando o usuário não existir.
+- ✅ Deve, como USER, listar suas próprias tasks de forma paginada, retornando 200 OK.
+- ❌ Deve retornar 404 Not Found quando o projeto não existir.
+- ❌ Deve retornar 404 Not Found quando o usuário não existir.
+
+**📋 Buscar Todas as Tarefas com Filtros**
+- ✅ Deve, como ADMIN, listar todas as tarefas quando nenhum filtro for aplicado.
+- ✅ Deve, como USER, listar todas suas tarefas quando nenhum filtro for aplicado.
+- ✅ Deve listar todas as tarefas filtradas corretamente quando todos os filtros forem aplicados.
+- ❌ Deve retornar 404 Not Found quando o projeto não existir.
+- ❌ Deve retornar 400 Bad Request ao filtrar por status inexistente.
+- ❌ Deve retornar 403 Forbidden quando usuário normal tentar filtrar por projeto do qual não faz parte.
+- ✅ Deve, como USER, retornar suas tarefas filtrando por status válido.
 
 **✏️ Atualização Parcial (PATCH)**
-- ✅ ADMIN pode atualizar parcialmente o status da task, retornando 200 OK.
-- ✅ Usuário responsável pode atualizar parcialmente o status da task, retornando 200 OK.
-- ❌ Usuário não responsável não pode atualizar parcialmente a task, retornando 403 Forbidden.
+- ✅ Deve, como ADMIN, atualizar parcialmente o status da task, retornando 200 OK.
+- ✅ Deve, como USER responsável, atualizar parcialmente o status da task, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden quando usuário não responsável tentar atualizar parcialmente a task.
 
 **📝 Atualização Completa (PUT)**
-- ✅ ADMIN pode atualizar completamente uma task, retornando 200 OK.
-- ✅ Usuário responsável pode atualizar completamente sua task, retornando 200 OK.
-- ❌ Usuário não responsável não pode atualizar a task, retornando 403 Forbidden.
+- ✅ Deve, como ADMIN, atualizar completamente uma task, retornando 200 OK.
+- ✅ Deve, como USER responsável, atualizar completamente sua task, retornando 200 OK.
+- ❌ Deve retornar 403 Forbidden para usuário não responsável ao tentar atualizar a task.
 
 **🗑️ Exclusão de Task (DELETE)**
-- ✅ ADMIN pode deletar uma task, retornando 204 No Content.
-- ✅ Usuário responsável pode deletar sua task, retornando 204 No Content.
-- ❌ Usuário não responsável não pode deletar task, retornando 403 Forbidden.
+- ✅ Deve, como ADMIN, deletar uma task, retornando 204 No Content.
+- ✅ Deve, como USER responsável, deletar sua task, retornando 204 No Content.
+- ❌ Deve retornar 403 Forbidden para usuário não responsável ao tentar deletar task.
+

@@ -1,5 +1,6 @@
 package com.teamtacles.teamtacles_api.task;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
+import com.teamtacles.teamtacles_api.model.Project;
 import com.teamtacles.teamtacles_api.model.Task;
 import com.teamtacles.teamtacles_api.model.enums.Status;
 import com.teamtacles.teamtacles_api.repository.ProjectRepository;
@@ -26,6 +28,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -235,6 +239,115 @@ public class TaskControllerTest {
     }
 
     @Test
+    @DisplayName("Should return all tasks when no filters are applied")
+    void testGetTaks_WhenAdmin_ShouldReturn200() throws Exception {
+        Task savedTask = createUserTask();
+        Task savedTask2 = createAdminTask();
+
+        mockMvc.perform(get("/api/project/task/search")
+                .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Review project documentation"))
+                .andExpect(jsonPath("$.content[1].title").value("Admin's Task"));
+    }
+
+    @Test
+    @DisplayName("Should return all tasks when no filters are applied")
+    void testGetTaks_WhenUser_ShouldReturn200() throws Exception {
+        Task savedTask = createUserTask();
+        Task savedTask2 = createAdminTask();
+
+        mockMvc.perform(get("/api/project/task/search")
+                .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Review project documentation"))
+                .andExpect(jsonPath("$.content[1].title").doesNotExist()); // não aparece para o usuario
+    }
+
+    @Test
+    @DisplayName("Should return tasks filtered by status, dueDate and projectId when admin with 200 OK")
+    void testGetTasksFiltered_WhenAdminWithFilters_ShouldReturn200() throws Exception {
+        Task savedTask = createUserTask();
+
+        String status = savedTask.getStatus().toString();
+        String dueDate = (LocalDateTime.now().plusDays(3)).toString();
+        Long projectId = savedTask.getProject().getId();
+
+        mockMvc.perform(get("/api/project/task/search")
+            .param("status", status)
+            .param("dueDate", dueDate)
+            .param("projectId", String.valueOf(projectId))
+            .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].status").value(status))
+            .andExpect(jsonPath("$.content[0].project.id").value(projectId))
+            .andExpect(jsonPath("$.content[0].title").value("Review project documentation"));
+
+            LocalDateTime dueDateTime = LocalDateTime.parse(dueDate);
+            assertTrue(savedTask.getDueDate().isBefore(dueDateTime) || savedTask.getDueDate().isEqual(dueDateTime));
+    }
+
+    @Test
+    @DisplayName("Should throw AccessDeniedException when normal user tries to filter by a project they don't belong to")
+    void testGetTasksFiltered_WithUnauthorizedProjectId_ShouldReturn403() throws Exception {
+        Project project = new Project();
+        project.setTitle("API Project");
+        project.setDescription("Team task management API");
+        project.setTeam(List.of(testDataAux.getAdminUser()));  // only admin user on the team
+        project.setCreator(testDataAux.getAdminUser());
+
+        project = projectRepository.save(project);
+
+        mockMvc.perform(get("/api/project/task/search")
+            .param("projectId", String.valueOf(project.getId()))
+            .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+            .andDo(print())
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Should return tasks of normal user filtered by valid status")
+    void testGetTasksFiltered_WithValidStatusForNormalUser_ShouldReturnTasks() throws Exception {
+        Task savedTask = createUserTask();
+
+        String status = savedTask.getStatus().toString();
+
+        mockMvc.perform(get("/api/project/task/search")
+            .param("status", status)
+            .header("Authorization", "Bearer " + testDataAux.getNormalUserToken()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(Matchers.greaterThanOrEqualTo(1)))
+            .andExpect(jsonPath("$.content[0].status").value(status));
+    }
+
+    @Test
+    @DisplayName("Should return 404 Not Found when filtering tasks with non-existent projectId")
+    void testGetTasksFiltered_WithNonExistentProjectId_ShouldReturn404() throws Exception {
+        mockMvc.perform(get("/api/project/task/search")
+            .param("projectId", "100")  // ID de projeto inexistente
+            .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
+            .andDo(print())
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when filtering tasks with invalid status")
+    void testGetTasksFiltered_WithInvalidStatus_ShouldReturn400() throws Exception {
+        mockMvc.perform(get("/api/project/task/search")
+            .param("status", "LOADING")  // Status inválido
+            .header("Authorization", "Bearer " + testDataAux.getAdminUserToken()))
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("Should partially update task as Admin with 200 OK")
     void testPartialUpdate_WhenAdmin_ShouldReturn200() throws Exception {
         Task savedTask = createUserTask();
@@ -377,6 +490,7 @@ public class TaskControllerTest {
         task.setDueDate(LocalDateTime.now().plusDays(2));
         task.setUsersResponsability(List.of(testDataAux.getNormalUser()));
         task.setOwner(testDataAux.getNormalUser());
+        task.setStatus(Status.TODO);
         task.setProject(testDataProjectAux.getProject());
 
         return taskRepository.save(task);
@@ -389,6 +503,7 @@ public class TaskControllerTest {
         adminTask.setDueDate(LocalDateTime.now().plusDays(2));
         adminTask.setUsersResponsability(List.of(testDataAux.getAdminUser()));
         adminTask.setOwner(testDataAux.getAdminUser());
+        adminTask.setStatus(Status.TODO);
         adminTask.setProject(testDataProjectAux.getProject());
 
         return taskRepository.save(adminTask);

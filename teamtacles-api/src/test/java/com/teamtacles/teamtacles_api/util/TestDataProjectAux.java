@@ -20,6 +20,8 @@ public class TestDataProjectAux {
     private Project project;
 
     public void setUpTestProject() {
+        projectRepository.deleteAll();
+
         Project project = new Project();
         project.setTitle("API Project");
         project.setDescription("Team task management API");

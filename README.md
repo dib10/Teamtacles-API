@@ -9,15 +9,16 @@ O **Teamtacles-API** é uma API RESTful desenvolvida utilizando **Java, Spring B
 
 A API visa **auxiliar o gerenciamento de tarefas em equipe**, promovendo a colaboração e a produtividade durante a realização de projetos. O **Teamtacles-API** é ideal para times que estão se sentindo **afogados no mar de tarefas** e desejam o **apoio de tentáculos** na organização e gerenciamento, tornando o fluxo de trabalho mais **eficiente e colaborativo**.
 
-## Assuntos
----
-- [✨ Funcionalidades Implementadas](#-funcionalidades-implementadas)
-- [🖥️ Instruções de Execução Local](#-instruções-de-execução-local)
-- [🔑 Como obter o token JWT e testar os endpoints](#-como-obter-o-token-jwt-e-testar-os-endpoints)
-- [🗃️ Resumo do modelo de dados e regras de validação](#-resumo-do-modelo-de-dados-e-regras-de-validação)
-- [🛡️ Descrição do Funcionamento da Autenticação e Autorização](#-descrição-do-funcionamento-da-autenticação-e-autorização)
-## ✨ Funcionalidades Implementadas
----
+## Sobre as profundezas 
+- [✨ Funcionalidades Ancoradas](#funcionalidades-ancoradas)
+- [🏝️ Mergulho Local: Como Executar](#mergulho-local-como-executar)
+- [🦑 Tentáculos Autorizados: Como Obter o Token e Testar](#tentaculos-autorizados-como-obter-o-token-e-testar)
+- [🌊 Mapa dos Dados: Estruturas e Validações](#mapa-dos-dados-estruturas-e-validacoes)
+- [🛡️ Rede de Proteção: Autenticação e Autorização](#rede-de-protecao-autenticacao-e-autorizacao)
+- [🌊 Correntes de Testes: Validação das Funcionalidades](#correntes-de-testes-validacao-das-funcionalidades)
+
+## ✨ Funcionalidades Ancoradas
+
 
 **🔐 Autenticação e Autorização**
 - Cadastro de usuários com nome, e-mail e senha;
@@ -37,8 +38,8 @@ A API visa **auxiliar o gerenciamento de tarefas em equipe**, promovendo a colab
 - Listagem de tarefas por status e projeto;
 - Consulta de tarefas de usuários específicos para análise de carga de trabalho.
 
-## 🖥️ Instruções de Execução Local
----
+## 🏝️ Mergulho Local: Como Executar
+
 **Pré-requisitos**
 - Java JDK 21 ou superior
 - Maven 3.6 ou superior
@@ -65,8 +66,8 @@ mvn spring-boot:run
 
 2. Acessar a API em [http://localhost:8080](http://localhost:8080)
 
-## 🔑 Como obter o token JWT e testar os endpoints
----
+## 🦑 Tentáculos Autorizados: Como Obter o Token e Testar
+
 ### 1. Registrar um novo usuário
 Para criar uma conta nova, envie uma requisição `POST` para o endpoint de registro:
 ```POST /api/user/register```
@@ -118,8 +119,8 @@ Você pode usar esse usuário para fazer login e testar a API sem precisar regis
 **Observação:**
 Sempre que o token expirar, faça login novamente para obter um novo token.
 
-## 🗃️ Resumo do modelo de dados e regras de validação
----
+## 🌊 Mapa dos Dados: Estruturas e Validações
+
 ### 1. User
 
 **Campos:**
@@ -206,8 +207,8 @@ team — Lista de usuários que participam do projeto.
 - Serialização cuida de problemas de referência cíclica com `@JsonManagedReference` e `@JsonBackReference`.
 - O modelo utiliza JPA para persistência e Spring Security para autenticação e autorização com UserDetails.
 
-## 🛡️ Descrição do Funcionamento da Autenticação e Autorização
----
+## 🛡️ Rede de Proteção: Autenticação e Autorização
+
 ### 🔒 Autenticação
 É utilizado o JWT (JSON Web Token) para autenticar os usuários.
 
@@ -234,3 +235,156 @@ A autorização é feita automaticamente pelo Spring Security, que verifica:
 
 **Administrador (ADMIN):**
 - Pode realizar todas as operações do sistema, incluindo criar, atualizar e excluir qualquer recurso.
+
+## 🌊 Correntes de Testes: Validação das Funcionalidades
+Foram implementados testes unitários e funcionais para validar as principais funcionalidades da aplicação. Estes testes garantem que as rotas da API de usuários se comportam corretamente em diferentes cenários, simulando o fluxo real da aplicação, incluindo autenticação e autorização.
+
+### 🧪 Testes Unitários
+
+### UserServiceTest
+**Cenários Testados**
+**📝 Registro de Usuário**
+- ✅ Deve permitir o registro de um novo usuário com dados válidos, retornando o DTO do usuário criado.
+- ❌ Deve lançar exceção `UsernameAlreadyExistsException` se o username já existir.
+- ❌ Deve lançar exceção `EmailAlreadyExistsException` se o e-mail já estiver cadastrado.
+- ❌ Deve lançar exceção `PasswordMismatchException` se as senhas não coincidirem.
+
+**🔄 Atualização de Papel (Role) do Usuário**
+- ✅ Deve atualizar o papel do usuário com sucesso e retornar o DTO atualizado.
+- ❌ Deve lançar exceção `ResourceNotFoundException` se o usuário não existir.
+- ❌ Deve lançar exceção `IllegalArgumentException` se o papel informado não for válido.
+
+### ProjectServiceTest
+**Cenários Testados**
+**📝 Criação de Projeto**
+- ✅ Deve criar um projeto com dados válidos, retornando o DTO do projeto criado.
+- ❌ Deve lançar `ResourceNotFoundException` quando algum usuário da equipe não for encontrado.
+
+**🔍 Consulta de Projeto**
+- ✅ Deve retornar um projeto pelo ID quando ele existir.
+- ❌ Deve lançar `ResourceNotFoundException` quando o projeto não for encontrado pelo ID.
+
+**✏️ Atualização Completa de Projeto**
+- ✅ Deve atualizar um projeto quando o usuário for o dono.
+- ✅ Deve atualizar um projeto quando o usuário for ADM.
+- ❌ Deve lançar `InvalidTaskStateException` quando um usuário não-dono e não-ADM tentar atualizar o projeto.
+
+**✏️ Atualização Parcial de Projeto (Patch)**
+- ✅ Deve atualizar parcialmente um projeto quando o usuário for o dono.
+- ✅ Deve atualizar parcialmente um projeto quando o usuário for ADM.
+- ❌ Deve lançar `InvalidTaskStateException` quando um usuário não-dono e não-ADM tentar atualizar parcialmente o projeto.
+
+**🗑 Exclusão de Projeto**
+- ✅ Deve deletar um projeto quando o usuário for o dono.
+- ✅ Deve deletar um projeto quando o usuário for ADM.
+- ❌ Deve lançar `InvalidTaskStateException` quando um usuário não-dono e não-ADM tentar deletar o projeto.
+
+### TaskServiceTest
+**Cenários Testados**
+**📝 Criação de Tarefa**
+- ✅ Deve criar uma tarefa com sucesso quando os dados forem válidos.
+- ❌ Deve lançar `ResourceNotFoundException` quando o projeto não existir.
+- ❌ Deve lançar `ResourceNotFoundException` quando o usuário responsável não existir.
+
+**🔍 Consulta de Task por ID**
+- ✅ Deve retornar a task pelo ID quando o usuário for admin.
+- ✅ Deve retornar a task pelo ID quando o usuário for o dono (owner).
+- ✅ Deve retornar a task pelo ID quando o usuário for responsável.
+- ❌ Deve lançar `ResourceNotFoundException` quando a task não existir pelo ID.
+- ❌ Deve lançar `ResourceNotFoundException` quando a task não pertencer ao projeto especificado.
+- ❌ Deve lançar `InvalidTaskStateException` quando usuário não autorizado tentar acessar a task.
+
+**📋 Consulta de Tasks de Usuário em Projeto**
+- ✅ Deve retornar lista paginada de tasks de um usuário em um projeto quando quem acessa for admin.
+- ❌ Deve lançar `AccessDeniedException` quando usuário não admin tentar acessar tasks de outro usuário.
+- ❌ Deve lançar `ResourceNotFoundException` quando o projeto não existir (no acesso do admin).
+- ❌ Deve lançar `ResourceNotFoundException` quando usuário alvo da busca não for encontrado (acesso admin).
+- ✅ Deve retornar página vazia quando usuário alvo não tiver tarefas no projeto (acesso admin).
+
+**📋 Buscar Todas as Tarefas com Filtros**
+- ✅ Deve retornar todas as tarefas quando nenhum filtro for aplicado (acesso admin).
+- ✅ Deve retornar tarefas filtradas corretamente quando todos os filtros forem aplicados (acesso admin).
+- ❌ Deve lançar `ResourceNotFoundException` ao filtrar por projeto inexistente (acesso admin).
+- ❌ Deve lançar `IllegalArgumentException` quando o admin filtrar por um status inválido.
+- ✅ Deve retornar as tarefas do usuário normal sem filtros aplicados.
+- ✅ Deve retornar as tarefas do usuário normal filtrando por projeto válido.
+- ❌ Deve lançar `AccessDeniedException` quando o usuário normal tentar filtrar por projeto do qual não faz parte.
+- ✅ Deve retornar as tarefas do usuário normal filtrando por status válido.
+
+### ⚙️ Testes Funcionais
+Os testes funcionais utilizam o MockMvc para simular requisições HTTP reais à API, garantindo a validação completa dos endpoints. Para facilitar os testes, implementamos utilitários que geram tokens JWT para os perfis de usuário comum e administrador.
+
+Além disso, realizamos o isolamento dos testes com o uso do `@BeforeEach`, garantindo um ambiente limpo e consistente a cada execução, evitando interferência entre os casos de teste.
+
+#### UserControllerTest
+
+**Cenários Testados**
+
+**📝 Registro de Usuário**
+- ✅ Deve permitir o registro de um novo usuário, retornando 201 Created.
+- ❌ Deve retornar 409 Conflict se o username já existir.
+- ❌ Deve retornar 409 Conflict se o e-mail já estiver cadastrado.
+- ❌ Deve retornar 400 Bad Request se as senhas não coincidirem.
+
+**🔐 Atualização de Permissão**
+- ✅ Deve permitir que um administrador atualize a permissão (role) de um usuário, retornando 200 OK.
+- ❌ Deve proibir que um usuário comum altere permissões, retornando 403 Forbidden.
+
+**📄 Listagem de Usuários**
+- ✅ Deve permitir que um administrador consulte a lista paginada de usuários, com informações sobre total de elementos e páginas.
+- ❌ Deve proibir a listagem quando o usuário não tiver perfil de administrador (403 Forbidden).
+- ❌ Deve negar o acesso a usuários não autenticados (401 Unauthorized).
+
+### ProjectControllerTest
+**Cenários Testados**
+
+**🆕 Criação de Projeto**
+- ✅ Deve criar um projeto com usuário comum, retornando 201 Created.
+
+**📋 Listagem de Projetos**
+- ✅ Deve listar todos os projetos para ADMIN, retornando 200 OK.
+- ✅ Deve retornar lista vazia para usuário não membro da equipe quando não está em nenhum projeto, retornando 200 OK.
+- ✅ Deve retornar projetos para usuário membro da equipe, retornando 200 OK.
+
+**✏️ Atualização Parcial (PATCH)**
+- ✅ Deve permitir que ADMIN atualize parcialmente um projeto, retornando 200 OK.
+- ❌ Deve proibir atualização parcial por usuário comum que está na equipe, retornando 403 Forbidden.
+- ❌ Deve proibir atualização parcial por usuário comum que não está na equipe, retornando 403 Forbidden.
+
+**📝 Atualização Completa (PUT)**
+- ✅ Deve permitir que ADMIN atualize completamente um projeto, retornando 200 OK.
+- ❌ Deve proibir atualização completa por usuário comum que não é criador, retornando 403 Forbidden.
+
+**🗑️ Exclusão de Projeto (DELETE)**
+- ✅ Deve permitir que ADMIN exclua um projeto, retornando 204 No Content.
+- ❌ Deve proibir exclusão por usuário comum que não é criador, retornando 403 Forbidden.
+
+
+### TaskControllerTest
+**Cenários Testados**
+
+**🆕 Criação de Task**
+- ✅ Deve criar uma task e retornar 201 Created.
+
+**📄 Consulta de Task por ID**
+- ✅ ADMIN deve conseguir buscar uma task pelo ID, retornando 200 OK.
+- ❌ Usuário não responsável deve ser proibido de acessar a task, retornando 403 Forbidden.
+
+**👥 Listagem de Tasks por Usuário**
+- ✅ ADMIN deve conseguir listar tasks de um usuário, retornando 200 OK.
+- ❌ Usuário comum não pode listar suas próprias tasks via endpoint admin, retornando 403 Forbidden.
+
+**✏️ Atualização Parcial (PATCH)**
+- ✅ ADMIN pode atualizar parcialmente o status da task, retornando 200 OK.
+- ✅ Usuário responsável pode atualizar parcialmente o status da task, retornando 200 OK.
+- ❌ Usuário não responsável não pode atualizar parcialmente a task, retornando 403 Forbidden.
+
+**📝 Atualização Completa (PUT)**
+- ✅ ADMIN pode atualizar completamente uma task, retornando 200 OK.
+- ✅ Usuário responsável pode atualizar completamente sua task, retornando 200 OK.
+- ❌ Usuário não responsável não pode atualizar a task, retornando 403 Forbidden.
+
+**🗑️ Exclusão de Task (DELETE)**
+- ✅ ADMIN pode deletar uma task, retornando 204 No Content.
+- ✅ Usuário responsável pode deletar sua task, retornando 204 No Content.
+- ❌ Usuário não responsável não pode deletar task, retornando 403 Forbidden.

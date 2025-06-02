@@ -28,7 +28,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
+/**
+ * REST controller for managing user-related operations in the TeamTacles application.
+ * This controller provides endpoints for user registration, changing user roles, and retrieving lists of users.
+ * It leverages Spring Security for access control, notably for administrative functions.
+ *
+ * @author TeamTacles
+ * @version 1.0
+ * @since 2025-05-25
+ */
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -39,6 +47,15 @@ public class UserController {
         this.userService = userService;
     }
 
+     /**
+     * Registers a new user with the provided details.
+     * This endpoint allows new users to create an account by submitting their registration information.
+     *
+     * @param userRequestDTO The UserRequestDTO containing the username, password, and other registration details.
+     * This object is validated to ensure all required fields are present and correctly formatted.
+     * @return A ResponseEntity containing the UserResponseDTO of the newly created user
+     * and an HTTP status of 201 (Created) upon successful registration.
+     */
     @Operation(summary = "Register User", description = "Registers a new user with the provided details.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "User registered successfully, returns user details."), 
@@ -52,6 +69,16 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userCreated);
     }
 
+    /**
+     * Allows an administrator to change the role of an existing user.
+     * This endpoint is protected by Spring Security's `@PreAuthorize("hasRole('ADMIN')")`,
+     * ensuring that only users with the 'ADMIN' role can access it.
+     *
+     * @param id The unique identifier (ID) of the user whose role is to be changed.
+     * @param roleRequestDTO The RoleRequestDTO containing the new role information for the user.
+     * @return A ResponseEntity containing the UserResponseDTO of the updated user
+     * and an HTTP status of 200 (OK) upon successful role change.
+     */
     @Operation(summary = "Change user role", description = "Allows an administrator to change an existing user's role.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User role changed successfully."),
@@ -70,6 +97,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userChanged);
     }
 
+    /**
+     * Retrieves a paginated list of all registered users in the system.
+     * This endpoint is restricted to users with the 'ADMIN' role for security purposes.
+     *
+     * @param pageable Pageable object containing pagination parameters such as page number, size, and sort order.
+     * @return A ResponseEntity containing a PagedResponse of UserResponseDTO objects,
+     * representing the paginated list of all users, along with an HTTP status of 200 (OK).
+     */
     @Operation(summary = "Get all users", description = "Retrieves a paginated list of all registered users. Only accessible by administrators.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the list of users."),

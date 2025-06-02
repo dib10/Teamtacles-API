@@ -8,15 +8,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Implements the {@link UserDetails} interface for Spring Security,
+ * Implements the UserDetails interface for Spring Security,
  * providing a representation of an authenticated user within the TeamTacles application.
- * This class wraps the core {@link User} entity and exposes its necessary
+ * This class wraps the core User entity and exposes its necessary
  * authentication and authorization details for Spring Security's framework.
  *
- * It acts as an adapter, translating the application's {@link User} model
+ * It acts as an adapter, translating the application's User model
  * into a format consumable by Spring Security.
  *
- * @author TeamTacles Development Team
+ * @author TeamTacles 
  * @version 1.0
  * @since 2025-05-23
  */

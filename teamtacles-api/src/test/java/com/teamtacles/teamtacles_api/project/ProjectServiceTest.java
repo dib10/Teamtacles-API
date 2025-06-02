@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.springframework.security.access.AccessDeniedException; 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -257,7 +258,7 @@ public class ProjectServiceTest {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(existingProject));
 
         // O criador desse projeto é o user1, então passandp CreateUser lançar a exceção
-        assertThrows(InvalidTaskStateException.class, () -> projectService.updateProject(projectId, projectRequestDTO, user4));
+        assertThrows(AccessDeniedException.class, () -> projectService.updateProject(projectId, projectRequestDTO, user4));
     }
     
 
@@ -358,7 +359,7 @@ public class ProjectServiceTest {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(existingProject));
         
         // O criador desse projeto é o user1, então passandp CreateUser lançar a exceção
-        assertThrows(InvalidTaskStateException.class, () -> projectService.partialUpdateProject(projectId, patchDTO, user4));
+        assertThrows(AccessDeniedException.class, () -> projectService.partialUpdateProject(projectId, patchDTO, user4));
     }
 
     @Test
@@ -414,6 +415,6 @@ public class ProjectServiceTest {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(existingProject));
         
         // O criador desse projeto é o user1, então passandp CreateUser lançar a exceção
-        assertThrows(InvalidTaskStateException.class, () -> projectService.deleteProject(projectId, user4));
+        assertThrows(AccessDeniedException.class, () -> projectService.deleteProject(projectId, user4));
     }
 }

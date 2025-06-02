@@ -23,11 +23,19 @@ import com.teamtacles.teamtacles_api.repository.UserRepository;
 import java.util.stream.Collectors; 
 import com.teamtacles.teamtacles_api.dto.response.RoleResponseDTO;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/** 
+ * Service class responsible for managing user-related business logic in the TeamTacles application.
+ * This includes operations such as creating new users, updating user roles, and retrieving user lists.
+ * It interacts with repositories for data persistence and handles specific business exceptions.
+ *
+ * @author TeamTacles 
+ * @version 1.0
+ * @since 2025-05-25
+ */
 @Service
 public class UserService {
     
@@ -46,6 +54,14 @@ public class UserService {
         this.modelMapper = modelMapper;
     }
 
+    /**
+     * Creates a new user in the system based on the provided user request data.
+     * Performs validation to ensure username/email uniqueness and password confirmation matching.
+     * Newly created users are assigned the default ERole.USER role.
+     *
+     * @param userRequestDTO The UserRequestDTO containing the details for the new user.
+     * @return A UserResponseDTO representing the newly created user.
+     */
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) { 
         if(userRepository.existsByUserName(userRequestDTO.getUserName())){
             throw new UsernameAlreadyExistsException("Username/email already exists"); 
@@ -81,6 +97,15 @@ public class UserService {
         return userResponseDTO;
     }
 
+    /**
+     * Updates the role of an existing user.
+     * This method retrieves a user by their ID, assigns a new role based on the request,
+     * clearing any previous roles, and then saves the updated user.
+     *
+     * @param The unique ID of the user whose role is to be updated.
+     * @param The RoleRequestDTO containing the new role name.
+     * @return A UserResponseDTO representing the user with the updated role.
+     */
     // patch Role
     public UserResponseDTO exchangepaperUser(Long id, RoleRequestDTO roleRequestDTO) {
         User user = userRepository.findById(id)
@@ -110,6 +135,12 @@ public class UserService {
 
     }
 
+    /**
+     * Retrieves a paginated list of all users registered in the system.
+     *
+     * @param pageable Pagination information (page number, page size, sorting).
+     * @return A PagedResponse containing a page of UserResponseDTO objects.
+     */
     public PagedResponse<UserResponseDTO> getAllUsers(Pageable pageable) {
         Page<User> users = userRepository.findAll(pageable);
         return pagedResponseMapper.toPagedResponse(users, UserResponseDTO.class);

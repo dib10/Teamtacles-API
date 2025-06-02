@@ -35,6 +35,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 
+/**
+ * REST controller for managing task-related operations within projects in the TeamTacles application.
+ * This controller provides endpoints for creating, retrieving, updating (full and partial),
+ * and deleting tasks. It ensures that only users with appropriate permissions can perform these actions
+ * by leveraging the authenticated user details and business logic from TaskService.
+ *
+ * @author TeamTacles 
+ * @version 1.0
+ * @since 2025-05-25
+ */
 @RestController
 @RequestMapping("/api/project")
 public class TaskController {
@@ -45,6 +55,19 @@ public class TaskController {
         this.taskService = taskService;
     }
 
+    /**
+     * Creates a new task associated with a specific project.
+     * Only users who are the project creator, a team member of the project, or an administrator
+     * have permission to create tasks within that project.
+     *
+     * @param id_project The unique identifier (ID) of the project to which the task will be added.
+     * @param taskRequestDTO The TaskRequestDTO containing the details for the new task (e.g., title, description, due date).
+     * This object is validated.
+     * @param authenticatedUser The UserAuthenticated object representing the currently authenticated user,
+     * injected automatically by Spring Security. This parameter is hidden from Swagger documentation.
+     * @return A ResponseEntity containing the TaskResponseDTO of the newly created task
+     * and an HTTP status of 201 (Created) upon successful creation.
+     */
     @Operation(summary = "Create a new task for a project", description = "Creates a new task associated with a specific project. Only users with appropriate permissions for the project (project creator, team member, or administrator) can create tasks.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Task created successfully, returns the new task details."),
@@ -63,6 +86,16 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskResponseDTO);
     }
 
+    /**
+     * Retrieves a specific task within a project by its task ID.
+     * Users can only view tasks that belong to projects they have access to (as a team member or administrator).
+     *
+     * @param id_project The unique ID of the project the task belongs to.
+     * @param id_task The unique ID of the task to retrieve.
+     * @param authenticatedUser The UserAuthenticated object representing the currently authenticated user.
+     * @return A ResponseEntity containing the TaskResponseDTO of the found task
+     * and an HTTP status of 200 (OK).
+     */
     @Operation(summary = "Get a task by ID", description = "Retrieves a specific task associated with a project by its ID. Users can only view tasks within projects they have access to.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the task details."),
@@ -77,8 +110,19 @@ public class TaskController {
         @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
     ){
         return ResponseEntity.ok(taskService.getTasksById(id_project, id_task, authenticatedUser.getUser()));
-    }   
+    }  
 
+    /**
+     * Retrieves a paginated list of tasks assigned to a specific user within a given project.
+     * This endpoint is typically restricted to administrators or the assigned user themselves.
+     *
+     * @param projectId The unique ID of the project.
+     * @param userId The unique ID of the user whose assigned tasks are to be retrieved.
+     * @param pageable Pageable object containing pagination parameters (page number, size, sort).
+     * @param userFromToken The UserAuthenticated object representing the currently authenticated user.
+     * @return A ResponseEntity containing a PagedResponse of { TaskResponseDTO objects,
+     * representing the paginated list of tasks, and an HTTP status of 200 (OK).
+     */
     @Operation(summary = "Get tasks assigned to a specific user within a project", description = "Retrieves a paginated list of tasks assigned to a specific user within a given project. Access is typically restricted to administrators.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the paginated list of tasks assigned to the user."),
@@ -97,6 +141,18 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Searches and filters tasks based on various criteria such as status, due date, and project ID.
+     * Users can only search within projects they have access to, or administrators can search across all projects.
+     *
+     * @param status Optional. Filters tasks by their status.
+     * @param dueDate Optional. Filters tasks by their due date. Uses DateTimeFormat.ISO.DATE_TIME for parsing.
+     * @param projectId Optional. Filters tasks belonging to a specific project.
+     * @param pageable Pageable object for pagination (page number, size, sort).
+     * @param authenticatedUser The UserAuthenticated object representing the currently authenticated user.
+     * @return A ResponseEntity containing a PagedResponse of TaskResponseFilteredDTO objects,
+     * representing the filtered and paginated list of tasks, and an HTTP status of 200 (OK).
+     */
     @Operation(summary = "Search and filter tasks", description = "Retrieves a paginated and filtered list of tasks based on provided criteria (status, due date, project ID). Users can only search within projects they have access to, or administrators")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the filtered list of tasks."),
@@ -107,17 +163,30 @@ public class TaskController {
     })
     @GetMapping("/task/search")
     public ResponseEntity<PagedResponse<TaskResponseFilteredDTO>> getAllTasksFiltered(@RequestParam(value = "status", required = false) 
-                                                                                    @Parameter(description = "Filter tasks by status") String status,
-                                                                                    @RequestParam(value = "dueDate", required = false) 
-                                                                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) 
-                                                                                    @Parameter(description = "Filter tasks by dueDate") LocalDateTime dueDate,
-                                                                                    @RequestParam(value = "projectId", required = false) @Parameter(description = "Filter tasks by Project ID") Long projectId,
-                                                                                    @Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, 
-                                                                                    @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        @Parameter(description = "Filter tasks by status") String status,
+        @RequestParam(value = "dueDate", required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) 
+        @Parameter(description = "Filter tasks by dueDate") LocalDateTime dueDate,
+        @RequestParam(value = "projectId", required = false) @Parameter(description = "Filter tasks by Project ID") Long projectId,
+        @Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, 
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
         PagedResponse tasksPage = taskService.getAllTasksFiltered(status, dueDate, projectId, pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(tasksPage);
     }  
 
+    /**
+     * Updates the status of a specific task within a project.
+     * This operation allows task assignees or administrators to change a task's status.
+     *
+     * @param id_project The unique ID of the project the task belongs to.
+     * @param id_task The unique ID of the task whose status is to be updated.
+     * @param taskRequestPatchDTO The TaskRequestPatchDTO containing the new status for the task.
+     * This object is validated.
+     * @param authenticatedUser The UserAuthenticated object representing the currently authenticated user.
+     * @return A ResponseEntity containing the TaskResponseDTO of the updated task
+     * and an HTTP status of 200 (OK) upon successful update.
+     */
     @Operation(summary = "Update task status", description = "Updates the status of a specific task within a project. Only users with appropriate permissions (e.g., project members, task assignees, or administrators) can change a task's status.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Task status updated successfully, returns the updated task details."),
@@ -136,7 +205,19 @@ public class TaskController {
         TaskResponseDTO taskResponseDTO = taskService.updateStatus(id_project, id_task, taskRequestPatchDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(taskResponseDTO);
     }
-
+    
+    /**
+     * Updates all modifiable details of a specific task within a project.
+     * This operation allows task assignees  or administrators to update a task.
+     *
+     * @param id_project The unique ID of the project the task belongs to.
+     * @param id_task The unique ID of the task to update.
+     * @param taskRequestDTO The TaskRequestDTO containing the complete updated details for the task.
+     * This object is validated.
+     * @param authenticatedUser The UserAuthenticated object representing the currently authenticated user.
+     * @return A ResponseEntity containing the TaskResponseDTO of the updated task
+     * and an HTTP status of 200 (OK) upon successful update.
+     */
     @Operation(summary = "Update an existing task", description = "Updates all modifiable details of a specific task within a project, identified by its project ID and task ID. Only users with appropriate permissions (project members, task assignees, or administrators) can update a task.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Task updated successfully, returns the updated task details."),
@@ -155,7 +236,16 @@ public class TaskController {
         TaskResponseDTO taskResponseDTO = taskService.updateTask(id_project, id_task, taskRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(taskResponseDTO);
     }
-    
+
+    /**
+     * Deletes a specific task from a project.
+     * This operation allows task assignees or administrators to delete a task.
+     *
+     * @param id_project The unique ID of the project the task belongs to.
+     * @param id_task The unique ID of the task to delete.
+     * @param authenticatedUser The UserAuthenticated object representing the currently authenticated user.
+     * @return A ResponseEntity with no content (HTTP status 204 No Content) upon successful deletion.
+     */
     @Operation(summary = "Delete a task", description = "Deletes a specific task identified by its project ID and task ID. Only users with appropriate permissions (project members, task assignees, or administrators) can delete a task.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Task deleted successfully (No Content)."),

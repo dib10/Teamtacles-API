@@ -28,6 +28,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+/**
+ * Service class responsible for handling business logic related to {Project entities
+ * in the TeamTacles application. This includes creating, retrieving, updating, and deleting projects,
+ * along with handling access control based on user roles and project ownership/membership.
+ *
+ * @author TeamTacles 
+ * @version 1.0
+ * @since 2025-05-25
+ */
 @Service
 public class ProjectService {
     
@@ -43,7 +52,15 @@ public class ProjectService {
         this.pagedResponseMapper = pagedResponseMapper;
     }
 
-    // visualizar todas as tarefas e projetos do SISTEMA, tudo tudo
+    /**
+     * Retrieves a paginated list of projects accessible by the authenticated user.
+     * If the user has an ERole.ADMIN role, all projects in the system are returned.
+     * Otherwise, only projects where the user is a team member are returned.
+     *
+     * @param pageable Pagination information (page number, page size, sorting).
+     * @param userFromToken The authenticated  User retrieved from the security context.
+     * @return A PagedResponse containing a page of ProjectResponseDTO objects.
+     */
     public PagedResponse<ProjectResponseDTO> getAllProjects(Pageable pageable, User userFromToken){
         Page<Project> projectsPage;
 
@@ -59,6 +76,14 @@ public class ProjectService {
         return pagedResponseMapper.toPagedResponse(projectsPage, ProjectResponseDTO.class);
     }
 
+    /**
+     * Retrieves a single project by its ID, ensuring the authenticated user has permission to view it.
+     * Only the project creator, a team member, or an administrator can view a project.
+     *
+     * @param id The unique ID of the project to retrieve.
+     * @param userFromToken The authenticated User attempting to view the project.
+     * @return A ProjectResponseDTO representing the found project.
+     */
     public ProjectResponseDTO getProjectById(@PathVariable Long id, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
@@ -68,7 +93,15 @@ public class ProjectService {
         return modelMapper.map(project, ProjectResponseDTO.class);
     }
 
-    // post
+    /**
+     * Creates a new project in the system. The authenticated user initiating the creation
+     * is automatically set as the project's creator and added to its team.
+     * Additional team members are looked up by their IDs and added to the project's team.
+     *
+     * @param projectRequestDTO The ProjectRequestDTO containing the details for the new project.
+     * @param userFromToken The authenticated User who is creating the project.
+     * @return A ProjectResponseDTO representing the newly created project.
+     */
     public ProjectResponseDTO createProject(ProjectRequestDTO projectRequestDTO, User userFromToken){
         // Busca o usuário criador do projeto
         User creatorUser = findUsers(userFromToken.getUserId());
@@ -94,7 +127,16 @@ public class ProjectService {
         return modelMapper.map(projectCreated, ProjectResponseDTO.class);
     }
 
-    // put
+    /**
+     * Updates an existing project with the provided details.
+     * Only the project creator or an administrator can fully update a project.
+     * Preserves the existing project team and creator during the update.
+     *
+     * @param id The unique ID of the project to update.
+     * @param projectRequestDTO The ProjectRequestDTO containing the updated project details.
+     * @param userFromToken The authenticated User attempting to update the project.
+     * @return A ProjectResponseDTO representing the updated project.
+     */
     public ProjectResponseDTO updateProject(Long id, ProjectRequestDTO projectRequestDTO, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
@@ -110,7 +152,16 @@ public class ProjectService {
         return modelMapper.map(updatedProject, ProjectResponseDTO.class);
     }
 
-    // patch
+    /**
+     * Partially updates an existing project with the provided details.
+     * Only the project creator or an administrator can partially update a project.
+     * Preserves the existing project team and creator during the update.
+     *
+     * @param id The unique ID of the project to partially update.
+     * @param projectRequestPatchDTO The ProjectRequestPatchDT} containing the fields to be updated.
+     * @param userFromToken The authenticated User attempting to partially update the project.
+     * @return A ProjectResponseDTO representing the partially updated project.
+     */
     public ProjectResponseDTO partialUpdateProject(Long id, ProjectRequestPatchDTO projectRequestPatchDTO, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
@@ -126,7 +177,13 @@ public class ProjectService {
         return modelMapper.map(updatedProject, ProjectResponseDTO.class);
     }
 
-    // delete
+    /**
+     * Deletes a project from the system.
+     * Only the project creator or an administrator can delete a project.
+     *
+     * @param id The unique ID of the project to delete.
+     * @param userFromToken The authenticated User attempting to delete the project.
+     */
     public void deleteProject(Long id, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
@@ -136,7 +193,13 @@ public class ProjectService {
         projectRepository.delete(project);
     }
 
-    // Método para verificar se o usuário pode visualizar o projeto
+    /**
+     * Ensures that the given user has permission to view the specified project.
+     * A user can view a project if they are an administrator or a member of the project's team.
+     *
+     * @param project The Project to check access for.
+     * @param user The User attempting to access the project.
+     */    
     public void ensureUserCanViewProject(Project project, User user) {
         if (!isADM(user) && !project.getTeam().stream().anyMatch(u -> u.getUserId().equals(user.getUserId()))){
             throw new AccessDeniedException("You do not have permission to access this resource.");    
@@ -147,8 +210,6 @@ public class ProjectService {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("user Not found."));
         return user;
     }
-
-    // Métodos para auxiliar
 
     // Verificando se o usuário é admin
     private boolean isADM(User user) {

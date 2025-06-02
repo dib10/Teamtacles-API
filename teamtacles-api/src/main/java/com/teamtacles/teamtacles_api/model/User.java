@@ -34,7 +34,7 @@ import jakarta.validation.constraints.NotBlank;
  *
  * This entity is mapped to the "users" database table.
  *
- * @author TeamTacles Development Team
+ * @author TeamTacles 
  * @version 1.0
  * @since 2025-05-22
  */

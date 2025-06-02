@@ -150,6 +150,22 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Should throw exception if role is not valid")
+    void testExchangeRoleUser_WhenAdmin_ShouldReturn400() throws Exception {
+        User user = testDataAux.getNormalUser();
+
+        RoleRequestDTO dto = new RoleRequestDTO();
+        dto.setRole("LEADER"); // inválido
+
+
+         mockMvc.perform(patch("/api/user/{id_user}/exchangepaper", user.getUserId())
+            .header("Authorization", "Bearer " + testDataAux.getAdminUserToken())
+            .contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("Should return paged list of all users")
     void testGetAllUsers_WhenAdmin_ShouldReturnPagedUsers() throws Exception {
         User user = testDataAux.getNormalUser();

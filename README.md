@@ -329,10 +329,11 @@ Além disso, realizamos o isolamento dos testes com o uso do `@BeforeEach`, gara
 **🔐 Atualização de Permissão**
 - ✅ Deve permitir que um administrador atualize a permissão (role) de um usuário, retornando 200 OK.
 - ❌ Deve proibir que um usuário comum altere permissões, retornando 403 Forbidden.
+- ❌ Deve retornar 400 Bad Request se a role informada for inválida.
 
 **📄 Listagem de Usuários**
-- ✅ Deve permitir que um administrador consulte a lista paginada de usuários, com informações sobre total de elementos e páginas.
-- ❌ Deve proibir a listagem quando o usuário não tiver perfil de administrador (403 Forbidden).
+- ✅ Deve permitir que um administrador consulte a lista paginada de todos os usuários.
+- ❌ Deve proibir a listagem de todos os usuários quando o não tiver perfil de administrador (403 Forbidden).
 - ❌ Deve negar o acesso a usuários não autenticados (401 Unauthorized).
 
 ### ProjectControllerTest
@@ -340,23 +341,31 @@ Além disso, realizamos o isolamento dos testes com o uso do `@BeforeEach`, gara
 
 **🆕 Criação de Projeto**
 - ✅ Deve criar um projeto com usuário comum, retornando 201 Created.
+- ❌ Deve retornar 404 not found quando algum usuário da equipe não for encontrado.
+- ❌ Deve retornar 400 Bad Request se o campo obrigatório "título" estiver vazio.
+- ❌ Deve retornar 400 Bad Request se o campo obrigatório "time" estiver vazio.
 
 **📋 Listagem de Projetos**
 - ✅ Deve listar todos os projetos para ADMIN, retornando 200 OK.
-- ✅ Deve retornar lista vazia para usuário não membro da equipe quando não está em nenhum projeto, retornando 200 OK.
-- ✅ Deve retornar projetos para usuário membro da equipe, retornando 200 OK.
+- ✅ Deve retornar apenas a lista de todos os projetos que o usuário participa.
+- ✅ Deve listar qualquer projeto existente filtrado pelo ID para o ADMIN, retornando 200 OK.
+- ❌ Deve retornar 404 Not found quando o projeto não for encontrado pelo ID.
+- ❌ Deve retornar 403 Forbidden quando o usuário tentar acessar um projeto por ID do qual não faz parte.
 
 **✏️ Atualização Parcial (PATCH)**
 - ✅ Deve permitir que ADMIN atualize parcialmente um projeto, retornando 200 OK.
+- ✅ Deve atualizar um projeto quando o usuário for o dono, retornando 200 OK.
 - ❌ Deve proibir atualização parcial por usuário comum que está na equipe, retornando 403 Forbidden.
 - ❌ Deve proibir atualização parcial por usuário comum que não está na equipe, retornando 403 Forbidden.
 
 **📝 Atualização Completa (PUT)**
 - ✅ Deve permitir que ADMIN atualize completamente um projeto, retornando 200 OK.
+- ✅ Deve permitir que Usuário dono atualize completamente um projeto, retornando 200 OK.
 - ❌ Deve proibir atualização completa por usuário comum que não é criador, retornando 403 Forbidden.
 
 **🗑️ Exclusão de Projeto (DELETE)**
 - ✅ Deve permitir que ADMIN exclua um projeto, retornando 204 No Content.
+- ✅ Deve permitir que usuário dono exclua seus projetos, retornando 204 No Content.
 - ❌ Deve proibir exclusão por usuário comum que não é criador, retornando 403 Forbidden.
 
 

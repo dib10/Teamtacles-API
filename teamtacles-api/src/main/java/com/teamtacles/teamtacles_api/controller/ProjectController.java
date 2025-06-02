@@ -23,6 +23,7 @@ import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.ProjectRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
+import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.service.ProjectService;
 
@@ -58,12 +59,25 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
 
+    @Operation(summary = "Get project by id", description = "Retrieves a specific project by its ID. Users can only view projects when they're in the team.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved the paginated list of projects."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: User not in the team."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectResponseDTO> getProjectById(@PathVariable Long id, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+        return ResponseEntity.ok(projectService.getProjectById(id, authenticatedUser.getUser()));
+    }
+
     @Operation(summary = "Get all projects", description = "Retrieves a paginated list of all projects. Users can typically only view projects they are associated with.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the paginated list of projects."),
         @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
         @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
     })
+
     @GetMapping("/all")
     public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(@Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, 
         @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser

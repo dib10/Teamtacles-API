@@ -62,7 +62,7 @@ public class ProjectService {
     public ProjectResponseDTO getProjectById(@PathVariable Long id, User userFromToken){
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
-            // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
+        // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
         ensureUserCanViewProject(project, userFromToken);
 
         return modelMapper.map(project, ProjectResponseDTO.class);
@@ -138,7 +138,7 @@ public class ProjectService {
 
     // Método para verificar se o usuário pode visualizar o projeto
     public void ensureUserCanViewProject(Project project, User user) {
-        if (!isADM(user) && !project.getTeam().contains(user)) {
+        if (!isADM(user) && !project.getTeam().stream().anyMatch(u -> u.getUserId().equals(user.getUserId()))){
             throw new AccessDeniedException("You do not have permission to access this resource.");    
         } 
     }

@@ -83,7 +83,7 @@ public class TaskService {
         ensureProjectMatchesTask(task, id_project);
 
         // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyTask(task, userFromToken);
+        ensureUserCanAccessTask(task, userFromToken);
         
         return modelMapper.map(task, TaskResponseDTO.class);
     }
@@ -132,7 +132,7 @@ public class TaskService {
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
         // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
         ensureProjectMatchesTask(task, id_project);
-        ensureUserCanModifyTask(task, userFromToken);
+        ensureUserCanAccessTask(task, userFromToken);
 
         List<User> usersResponsability = new ArrayList<>();
         
@@ -156,7 +156,7 @@ public class TaskService {
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
         
         ensureProjectMatchesTask(task, id_project);
-        ensureUserCanModifyTask(task, userFromToken);
+        ensureUserCanAccessTask(task, userFromToken);
 
         taskRequestPatchDTO.getStatus().ifPresent(task::setStatus);
         task.setId(id_task);
@@ -172,7 +172,7 @@ public class TaskService {
             .orElseThrow(() -> new ResourceNotFoundException("Task Not Found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
         ensureProjectMatchesTask(task, id_project);
-        ensureUserCanModifyTask(task, userFromToken);
+        ensureUserCanAccessTask(task, userFromToken);
 
         taskRepository.delete(task);
     }
@@ -195,12 +195,12 @@ public class TaskService {
     }
 
     // Validando se o usuário é dono do projeto, se ele não for adm/responsavel, ele não consegue criar, editar ou deletar tarefas de outros usuários
-    private void ensureUserCanModifyTask(Task task, User user) {
+    private void ensureUserCanAccessTask(Task task, User user) {
         boolean isResposible = task.getUsersResponsability().stream() 
             .anyMatch(resposible -> resposible.getUserId().equals(user.getUserId())); //verifica se o usuário é responsável pela tarefa
 
         if(!isADM(user) && !task.getOwner().getUserId().equals(user.getUserId()) && !isResposible) {
-            throw new InvalidTaskStateException ("You do not have permission to modify this task."); 
+            throw new AccessDeniedException (" FORBIDDEN - You do not have permission to modify this task."); 
         }
     }
     

@@ -99,7 +99,7 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyProject(project, userFromToken);
+        ensureUserCanAccessProject(project, userFromToken);
 
         modelMapper.map(projectRequestDTO, project);
         project.setId(id);
@@ -115,7 +115,7 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono do projeto ou se é um administrador
-        ensureUserCanModifyProject(project, userFromToken);
+        ensureUserCanAccessProject(project, userFromToken);
 
         modelMapper.map(projectRequestPatchDTO, project);
         project.setId(id);
@@ -131,7 +131,7 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("project Not found."));
             // Chama o método que verifica se o usuário é dono da tarefa ou se é um administrador
-        ensureUserCanModifyProject(project, userFromToken);
+        ensureUserCanAccessProject(project, userFromToken);
         
         projectRepository.delete(project);
     }
@@ -155,10 +155,10 @@ public class ProjectService {
         return user.getRoles().stream().anyMatch(role -> role.getRoleName().equals(ERole.ADMIN));
     }
 
-    // Validando se o usuário é dono do projeto, se ele não for adm, ele não consegue criar, editar ou deletar tarefas de outros usuários
-    private void ensureUserCanModifyProject(Project project, User user) {
+    // Validando se o usuário é dono do projeto, se ele não for adm, ele é proibido de criar, editar ou deletar projetos de outros usuários
+    private void ensureUserCanAccessProject(Project project, User user) {
         if(!isADM(user) && !project.getCreator().getUserId().equals(user.getUserId())) {
-            throw new InvalidTaskStateException (" You do not have permission to modify this project."); 
+            throw new AccessDeniedException (" FORBIDDEN - You do not have permission to modify this project."); 
         }
     }
 }

@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse); 
     }
 
-    // 409 - Quando o usuário tenta alterar uma tarefa concluída / de outro usuário
+    // 409 - Quando o usuário tenta alterar uma tarefa de outro usuário
     @ExceptionHandler(InvalidTaskStateException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleInvalidTaskStateException(InvalidTaskStateException ex){

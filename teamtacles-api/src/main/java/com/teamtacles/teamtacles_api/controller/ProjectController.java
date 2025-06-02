@@ -51,7 +51,9 @@ public class ProjectController {
         @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
     })
     @PostMapping
-    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid @Parameter(description = "Details of the project to be created (name, description, team...).") ProjectRequestDTO projectRequestDTO, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid @Parameter(description = "Details of the project to be created (name, description, team...).") ProjectRequestDTO projectRequestDTO, 
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
         ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
@@ -63,7 +65,9 @@ public class ProjectController {
         @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
     })
     @GetMapping("/all")
-    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(@Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(@Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, 
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
         PagedResponse projectsPage = projectService.getAllProjects(pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
     }  
@@ -113,7 +117,9 @@ public class ProjectController {
         @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable @Parameter(description = "Project ID") Long id, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<Void> deleteTask(@PathVariable @Parameter(description = "Project ID") Long id, 
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
         projectService.deleteProject(id, authenticatedUser.getUser());
         return ResponseEntity.noContent().build();
     }

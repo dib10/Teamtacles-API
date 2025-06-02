@@ -90,8 +90,8 @@ public class TaskController {
     @GetMapping("/{projectId}/tasks/user/{userId}")
     public ResponseEntity<PagedResponse<TaskResponseDTO>> getTasksByUserInProject(@PathVariable @Parameter(description = "Project ID") Long projectId, 
         @PathVariable @Parameter(description = "User ID") Long userId, 
-        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated userFromToken, 
-        @Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable
+        @Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable,
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated userFromToken
     ){
         PagedResponse<TaskResponseDTO> response = taskService.getAllTasksFromUserInProject(pageable, projectId, userId, userFromToken.getUser());
         return ResponseEntity.ok(response);

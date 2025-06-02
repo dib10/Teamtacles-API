@@ -12,10 +12,18 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Column;
 
+/**
+ * Represents a user role in the TeamTacles application, defining distinct levels
+ * of permissions and access within the system. This entity maps to the 'roles'
+ * database table.
+ *
+ * @author TeamTacles
+ * @version 1.0
+ * @since 2025-05-21
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 @Entity
 public class Role {
 

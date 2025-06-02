@@ -21,10 +21,20 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents a project within the TeamTacles application.
+ * Each project has a unique identifier, a title, an optional description,
+ * associated tasks, a designated creator, and a team of participating users.
+ *
+ * This entity is mapped to a database table to persist project information.
+ *
+ * @author TeamTacles
+ * @version 1.0
+ * @since 2025-05-20
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
 @Entity
 public class Project{
     @Id

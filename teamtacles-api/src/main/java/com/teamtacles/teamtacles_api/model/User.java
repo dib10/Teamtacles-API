@@ -26,10 +26,21 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Represents a user within the TeamTacles application.
+ * This entity stores essential user information such as credentials,
+ * and manages relationships with tasks, projects they own, projects they participate in,
+ * and their assigned roles.
+ *
+ * This entity is mapped to the "users" database table.
+ *
+ * @author TeamTacles Development Team
+ * @version 1.0
+ * @since 2025-05-22
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 @Entity
 @Table(name = "users")
 public class User{

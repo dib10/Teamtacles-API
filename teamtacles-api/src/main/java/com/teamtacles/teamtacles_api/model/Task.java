@@ -24,12 +24,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents a task within a project in the TeamTacles application.
+ * Each task has a unique identifier, a title, an optional description,
+ * a due date, a current status, an assigned owner, a list of responsible users,
+ * and is associated with a specific project.
+ *
+ * @author TeamTacles 
+ * @version 1.0
+ * @since 2025-05-22
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 @Entity
-public class Task implements Comparable<Task>{
+public class Task{
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,9 +77,4 @@ public class Task implements Comparable<Task>{
     @JoinColumn(name = "project_id", nullable = false)
     @JsonBackReference(value = "project-task")
     private Project project;
-
-	@Override
-	public int compareTo(Task task) {
-		return this.dueDate.compareTo(task.getDueDate());
-	}
 }

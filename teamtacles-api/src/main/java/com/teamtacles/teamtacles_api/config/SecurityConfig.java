@@ -49,6 +49,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions().sameOrigin()) //
                 .authorizeHttpRequests(auth ->  auth.requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/user/register").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll().anyRequest().authenticated()) //
                 .oauth2ResourceServer(
                         conf -> conf.jwt(jwt -> jwt.jwtAuthenticationConverter(customJwtAuthenticationConverter)))

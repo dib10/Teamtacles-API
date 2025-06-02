@@ -10,6 +10,10 @@ import com.teamtacles.teamtacles_api.dto.response.UserResponseDTO;
 import com.teamtacles.teamtacles_api.model.User;
 import com.teamtacles.teamtacles_api.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -35,22 +39,47 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(summary = "Register User", description = "Registers a new user with the provided details.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User registered successfully, returns user details."), 
+        @ApiResponse(responseCode = "400", description = "Bad Request: Invalid user data provided (missing fields, invalid format)."),
+        @ApiResponse(responseCode = "409", description = "Conflict: User with this username/email already exists."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: Unmapped error.")
+    })
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> registerUser(@Valid @RequestBody UserRequestDTO userRequestDTO){
+    public ResponseEntity<UserResponseDTO> registerUser(@Valid @RequestBody @Parameter(description = "User registration details including username and password") UserRequestDTO userRequestDTO){
         UserResponseDTO userCreated = userService.createUser(userRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(userCreated);
     }
 
+    @Operation(summary = "Change user role", description = "Allows an administrator to change an existing user's role.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User role changed successfully."),
+        @ApiResponse(responseCode = "400", description = "Bad Request: Invalid request body or target role provided."), 
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: User does not have administrative privileges to perform this action."), 
+        @ApiResponse(responseCode = "404", description = "Not Found: User with the specified ID was not found."), 
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: Unmapped error.")
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id_user}/exchangepaper")
-    public ResponseEntity<UserResponseDTO> exchangepaperUser(@PathVariable("id_user") Long id, @Valid @RequestBody RoleRequestDTO roleRequestDTO){
+    public ResponseEntity<UserResponseDTO> exchangepaperUser(@PathVariable("id_user") @Parameter(description = "User ID") Long id, 
+        @Valid @RequestBody @Parameter(description = "Details for changing the user's role, including the new role name.") RoleRequestDTO roleRequestDTO
+    ){
         UserResponseDTO userChanged = userService.exchangepaperUser(id, roleRequestDTO);
         return ResponseEntity.status(HttpStatus.OK).body(userChanged);
     }
 
+    @Operation(summary = "Get all users", description = "Retrieves a paginated list of all registered users. Only accessible by administrators.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved the list of users."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: User does not have the necessary 'ADMIN' role to access this resource."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: Unmapped error.")
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<PagedResponse<UserResponseDTO>> getAllUsers(Pageable pageable) {
+    public ResponseEntity<PagedResponse<UserResponseDTO>> getAllUsers(@Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable) {
         PagedResponse<UserResponseDTO> users = userService.getAllUsers(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }

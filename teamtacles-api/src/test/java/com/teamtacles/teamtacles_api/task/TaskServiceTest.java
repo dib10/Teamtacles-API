@@ -1,9 +1,13 @@
 package com.teamtacles.teamtacles_api.task;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,7 +28,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.test.context.ActiveProfiles;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
+import com.teamtacles.teamtacles_api.dto.response.ProjectResponseFilteredDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
+import com.teamtacles.teamtacles_api.exception.InvalidTaskStateException;
 import com.teamtacles.teamtacles_api.exception.ResourceNotFoundException;
 import com.teamtacles.teamtacles_api.mapper.PagedResponseMapper;
 import com.teamtacles.teamtacles_api.model.Project;
@@ -37,7 +43,15 @@ import com.teamtacles.teamtacles_api.repository.TaskRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 import com.teamtacles.teamtacles_api.service.ProjectService;
 import com.teamtacles.teamtacles_api.service.TaskService;
-import com.teamtacles.teamtacles_api.model.enums.Status; 
+import com.teamtacles.teamtacles_api.model.enums.Status;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import com.teamtacles.teamtacles_api.dto.page.PagedResponse;
+import org.springframework.security.access.AccessDeniedException; 
+import com.teamtacles.teamtacles_api.dto.response.TaskResponseFilteredDTO;
+
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -260,11 +274,607 @@ public class TaskServiceTest {
         verify(modelMapper, times(1)).map(existingTask, TaskResponseDTO.class);
     }
 
+    @Test
+    @DisplayName("2.2: Owner should get their own task by ID successfully")
+    void getTasksById_shouldReturnTask_whenUserIsOwner() {
+        // Arrange
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+
+        // Mock model mapper
+        TaskResponseDTO expectedResponseDTO = new TaskResponseDTO();
+        expectedResponseDTO.setId(existingTask.getId());
+        expectedResponseDTO.setTitle(existingTask.getTitle());
+        when(modelMapper.map(existingTask, TaskResponseDTO.class)).thenReturn(expectedResponseDTO);
+
+        //Act
+        TaskResponseDTO actualResponseDTO = taskService.getTasksById(testProject.getId(), existingTask.getId(), normalUser);
+
+        // Assert
+        assertNotNull(actualResponseDTO, "Response DTO should not be null for owner.");
+        assertEquals(expectedResponseDTO.getId(), actualResponseDTO.getId(), "Task ID should match.");
+        assertEquals(expectedResponseDTO.getTitle(), actualResponseDTO.getTitle(), "Task title should match.");
+        verify(taskRepository, times(1)).findById(existingTask.getId());
+        verify(modelMapper, times(1)).map(existingTask, TaskResponseDTO.class);
+
+
+    }
+
+    @Test
+    @DisplayName("2.3: Responsible user should get task by ID successfully")
+    void getTasksById_shouldReturnTask_whenUserIsResponsible() {
+        //Arrange
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+
+        // Mock model mapper
+        TaskResponseDTO expectedResponseDTO = new TaskResponseDTO();
+        expectedResponseDTO.setId(existingTask.getId());
+        expectedResponseDTO.setTitle(existingTask.getTitle());
+        when(modelMapper.map(existingTask, TaskResponseDTO.class)).thenReturn(expectedResponseDTO);
+
+        //act
+        TaskResponseDTO actualResponseDTO = taskService.getTasksById(testProject.getId(), existingTask.getId(), responsibleUser);
+        // Assert
+        assertNotNull(actualResponseDTO, "Response DTO should not be null for responsible user.");
+        assertEquals(expectedResponseDTO.getId(), actualResponseDTO.getId(), "Task ID should match.");
+        assertEquals(expectedResponseDTO.getTitle(), actualResponseDTO.getTitle(), "Task title should match.");
+
+        verify(taskRepository, times(1)).findById(existingTask.getId());
+        verify(modelMapper, times(1)).map(existingTask, TaskResponseDTO.class);
+
+    }
+
+    @Test
+    @DisplayName("2.4: Should throw ResourceNotFoundException when task ID does not exist")
+    void getTasksById_shouldThrowResourceNotFoundException_whenTaskNotFound() {
+
+        //Arrange
+        Long nonexistentTaskId = 999L;
+
+        when(taskRepository.findById(nonexistentTaskId)).thenReturn(Optional.empty());
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getTasksById(testProject.getId(), nonexistentTaskId, normalUser);
+        });
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    @DisplayName("2.5: Should throw ResourceNotFoundException when task does not belong to the specified project") 
+    void getTasksById_shouldThrowResourceNotFoundException_whenTaskDoesNotBelongToProject() {
+        //usando a existingTask que foi criada no setUp, mas com um projeto diferente
+        Long differentProjectId = 777L; 
+
+        // a tarefa deve ser encontrada, pois o problema não é a tarefa em si, mas sim o projeto ao qual ela pertence
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getTasksById(differentProjectId, existingTask.getId(), normalUser);
+        });
+
+        verify(modelMapper, never()).map(any(), any());
+
+
+    }
+
+    @Test
+    @DisplayName("2.6: Should throw InvalidTaskException when unauthorized user tries to access task by ID")
+    void getTasksById_shouldThrowInvalidTaskException_whenUnauthorizedUserIsNotAuthorized() {
+        // Arrange
+        when(taskRepository.findById(existingTask.getId())).thenReturn(Optional.of(existingTask));
+        // Act & Assert
+        InvalidTaskStateException exception = assertThrows(InvalidTaskStateException.class, () -> {
+            taskService.getTasksById(testProject.getId(), existingTask.getId(), otherUser);
+        });
+        //verifica q o modelMapper não foi chamado, pois o usuário não tem permissão para acessar a tarefa
+        verify(modelMapper, never()).map(any(), any());
+
+    }
+
+    @Test
+    @DisplayName("3.1: Admin Should get all tasks for a specific user in a specific project")
+    void getAllTasksFromUserInProject_shouldReturnPagedTasks_whenUserIsAdmin() {
+        //Arrange
+        Long projectIdToSearch = testProject.getId();
+        Long  userIdToSearchTasksFor = responsibleUser.getUserId();
+        Pageable pageable = PageRequest.of(0, 10); 
+
+        // Simulando que o projeto e o usu existam
+        when(projectRepository.findById(projectIdToSearch)).thenReturn(Optional.of(testProject));
+        when(userRepository.findById(userIdToSearchTasksFor)).thenReturn(Optional.of(responsibleUser));
+
+        // Simulando que o repositório de tarefas retorna uma lista de tarefas
+        List<Task> tasksForUser = List.of(existingTask);
+        Page<Task> tasksPageFromRepo = new PageImpl<>(tasksForUser, pageable, tasksForUser.size());
     
+        when(taskRepository.findByProjectIdAndUsersResponsabilityId(projectIdToSearch, userIdToSearchTasksFor, pageable)).thenReturn(tasksPageFromRepo);
+        
+        // Simulando mapeamento da pagina de entidades para pagina de DTOs
+        TaskResponseDTO taskDto = new TaskResponseDTO();
+        taskDto.setId(existingTask.getId());
+        taskDto.setTitle(existingTask.getTitle());
+
+        List<TaskResponseDTO> dtoList= List.of(taskDto);
+        PagedResponse<TaskResponseDTO> expectedPagedResponse = new PagedResponse<>(dtoList, tasksPageFromRepo.getNumber(), 
+            tasksPageFromRepo.getSize(), tasksPageFromRepo.getTotalElements(), tasksPageFromRepo.getTotalPages(), tasksPageFromRepo.isLast());
+            when(pagedResponseMapper.toPagedResponse(tasksPageFromRepo, TaskResponseDTO.class)).thenReturn(expectedPagedResponse);
+
+            //Act
+            PagedResponse<TaskResponseDTO> actualPagedResponse = taskService.getAllTasksFromUserInProject(
+                pageable, projectIdToSearch, userIdToSearchTasksFor, adminUser);
+
+            //Assert 
+            assertNotNull(actualPagedResponse, "The paged response should not be null.");
+            assertEquals(expectedPagedResponse.getTotalElements(), actualPagedResponse.getTotalElements(), "Total elements should match.");
+            assertEquals(1, actualPagedResponse.getContent().size(), "Content size should match the number of tasks returned.");
+            assertEquals(existingTask.getTitle(), actualPagedResponse.getContent().get(0).getTitle(), "Task titles should match.");
+
+            verify(projectRepository, times(1)).findById(projectIdToSearch);
+            verify(userRepository, times(1)).findById(userIdToSearchTasksFor);
+            verify(taskRepository, times(1)).findByProjectIdAndUsersResponsabilityId(projectIdToSearch, userIdToSearchTasksFor, pageable);
+            verify(pagedResponseMapper, times(1)).toPagedResponse(tasksPageFromRepo, TaskResponseDTO.class);
+
+    }
+
+    @Test
+    @DisplayName("3.2: Should throw AcessDeniedException when a non-admin user tries to get tasks from another user in a project")
+    void getAllTasksFromUserInProject_shouldThrowAccessDeniedException_whenUserIsNotAdmin() {
+        //Arrange
+        Long projectIdToSearch = testProject.getId();
+        Long userIdToSearchTasksFor = responsibleUser.getUserId();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        //Act & Assert
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+            taskService.getAllTasksFromUserInProject(pageable, projectIdToSearch, userIdToSearchTasksFor, normalUser);
+        });
+
+        verify(projectRepository, never()).findById(anyLong());
+        verify(userRepository, never()).findById(anyLong()); // para o usuário alvo da busca
+        verify(taskRepository, never()).findByProjectIdAndUsersResponsabilityId(anyLong(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+
+    }
+
+    @Test
+    @DisplayName("3.3: Should throw ResourceNotFoundException when project is not found (admin acess)")
+    void getAllTasksFromUserInProject_shouldThrowResourceNotFoundException_whenProjectNotFoundForAdmin() {
+        //Arrange
+        Long nonexistentProjectId = 888L;
+        Long userIdToSearchTasksFor = responsibleUser.getUserId();
+        Pageable pageable = PageRequest.of(0, 10);
+        when(projectRepository.findById(nonexistentProjectId)).thenReturn(Optional.empty());
+        //act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getAllTasksFromUserInProject(pageable, nonexistentProjectId, userIdToSearchTasksFor, adminUser);
+        });
+
+        verify(userRepository, never()).findById(anyLong()); 
+        verify(taskRepository, never()).findByProjectIdAndUsersResponsabilityId(anyLong(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+    }
+
+    @Test
+    @DisplayName("3.4: Should  throw ResourceNotFoundException when target user for task search is not found (admin acess)")
+    void getAllTasksFromUserInProject_shouldThrowResourceNotFoundException_whenTargetUserNotFoundForAdmin() {
+        //Arrange
+
+        Long projectIdToSearch = testProject.getId();
+        Long nonexistentUseridToSearchTasksFor = 997L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(projectRepository.findById(projectIdToSearch)).thenReturn(Optional.of(testProject));
+        when(userRepository.findById(nonexistentUseridToSearchTasksFor)).thenReturn(Optional.empty());
+
+        //act & assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getAllTasksFromUserInProject(pageable, projectIdToSearch, nonexistentUseridToSearchTasksFor, adminUser);
+        });
+        verify(taskRepository, never()).findByProjectIdAndUsersResponsabilityId(anyLong(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+        verify(projectRepository, times(1)).findById(projectIdToSearch);
+        
+    }
+
+    @Test
+    @DisplayName("3.5: Should return an empty page when target user has no tasks in the project (admin acess)")
+    void getAllTasksFromUserInProject_shouldReturnEmptyPage_whenTargetUserHasNoTasks() {
+        //Arrange
+
+        Long projectIdToSearch = testProject.getId();
+        Long userIdToSearchTasksFor = responsibleUser.getUserId();
+        Pageable pageable = PageRequest.of(0, 10);
+        when(projectRepository.findById(projectIdToSearch)).thenReturn(Optional.of(testProject));
+        when(userRepository.findById(userIdToSearchTasksFor)).thenReturn(Optional.of(responsibleUser));
+
+        List<Task> emptyTaskList = List.of(); // Lista vazia para simular que o usuário não tem tarefas
+        Page<Task> emptyTasksPageFromRepo = new PageImpl<>(emptyTaskList, pageable, 0);
+        when(taskRepository.findByProjectIdAndUsersResponsabilityId(projectIdToSearch, userIdToSearchTasksFor, pageable)).thenReturn(emptyTasksPageFromRepo);
+
+        List<TaskResponseDTO> emptyDtoList = List.of(); // Lista vazia de DTOs
+        PagedResponse<TaskResponseDTO> expectedEmptyPagedResponse = new PagedResponse<>(emptyDtoList, emptyTasksPageFromRepo.getNumber(), emptyTasksPageFromRepo.getSize(), emptyTasksPageFromRepo.getTotalElements(), emptyTasksPageFromRepo.getTotalPages(), emptyTasksPageFromRepo.isLast());
+
+        when(pagedResponseMapper.toPagedResponse(emptyTasksPageFromRepo, TaskResponseDTO.class)).thenReturn(expectedEmptyPagedResponse);
+
+        //Act
+        PagedResponse<TaskResponseDTO> actualPagedResponse = taskService.getAllTasksFromUserInProject(
+            pageable, projectIdToSearch, userIdToSearchTasksFor, adminUser); //adm fazendo a requisição
+        //Assert
+        assertNotNull(actualPagedResponse, "PagedResponse should not be null even if content is empty.");
+        assertTrue(actualPagedResponse.getContent().isEmpty(), "Content list should be empty.");
+        assertEquals(0, actualPagedResponse.getTotalElements(), "Total elements should be 0."); 
+        
+        verify(projectRepository, times(1)).findById(projectIdToSearch);
+        verify(userRepository, times(1)).findById(userIdToSearchTasksFor);
+        verify(taskRepository, times(1)).findByProjectIdAndUsersResponsabilityId(projectIdToSearch, userIdToSearchTasksFor, pageable);
+        verify(pagedResponseMapper, times(1)).toPagedResponse(emptyTasksPageFromRepo, TaskResponseDTO.class);
+    }
+
+    @Test
+    @DisplayName("4.1: Admin should get all tasks (no filters) successfully")
+    void getAllTasksFiltered_shouldReturnAllTasks_whenAdminAndNoFilters() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 5); 
+        User userMakingRequest = adminUser; // Admin fazendo a requisição
+
+        List<Task> tasksFromRepo = List.of(existingTask); 
+        Page<Task> taskPageFromRepo = new PageImpl<>(tasksFromRepo, pageable, tasksFromRepo.size());
+        
+        // nesse cenário o status, dueDate e projectId são null
+        when(taskRepository.findTasksFiltered(null, null, null, pageable))
+            .thenReturn(taskPageFromRepo);
+
+        TaskResponseFilteredDTO taskFilteredDto = new TaskResponseFilteredDTO();
+        taskFilteredDto.setId(existingTask.getId());
+        taskFilteredDto.setTitle(existingTask.getTitle());
+
+        List<TaskResponseFilteredDTO> dtoList = List.of(taskFilteredDto);
+        PagedResponse<TaskResponseFilteredDTO> expectedPagedResponse = new PagedResponse<>(
+            dtoList,
+            taskPageFromRepo.getNumber(),
+            taskPageFromRepo.getSize(),
+            taskPageFromRepo.getTotalElements(),
+            taskPageFromRepo.getTotalPages(),
+            taskPageFromRepo.isLast()
+        );
+        when(pagedResponseMapper.toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class))
+            .thenReturn(expectedPagedResponse);
+
+        // Act
+        PagedResponse<TaskResponseFilteredDTO> actualPagedResponse = taskService.getAllTasksFiltered(
+            null,       
+            null,      
+            null,       
+            pageable,
+            userMakingRequest
+        );
+
+        // Assert
+        assertNotNull(actualPagedResponse, "PagedResponse should not be null.");
+        assertEquals(expectedPagedResponse.getTotalElements(), actualPagedResponse.getTotalElements(), "Total elements should match.");
+        assertFalse(actualPagedResponse.getContent().isEmpty(), "Content should not be empty if tasks were returned.");
+        assertEquals(existingTask.getTitle(), actualPagedResponse.getContent().get(0).getTitle(), "Task title should match.");
+
+        verify(projectRepository, never()).findById(anyLong());
+        verify(projectService, never()).ensureUserCanViewProject(any(Project.class), any(User.class));
+        verify(taskRepository, times(1)).findTasksFiltered(null, null, null, pageable);
+        // Garante que o outro método de filtro do user comum não foi chamado
+        verify(taskRepository, never()).findTasksFilteredByUser(any(), any(), any(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, times(1)).toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class);
+    }
+
+    @Test
+    @DisplayName("4.2:  Admin shouldget tasks with all filters applied")
+        void getAllTasksFiltered_shouldReturnFilteredTasks_whenAdminAndAllFiltersApplied() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 5);
+        User userMakingRequest = adminUser;
+        String statusFilterString = "TODO"; 
+        Status expectedStatusEnum = Status.TODO; // Convertendo o filtro P ENUM
+        LocalDateTime dueDateFilter = LocalDateTime.now().plusDays(10);
+        Long projectIdFilter = testProject.getId();
+
+        when(projectRepository.findById(projectIdFilter)).thenReturn(Optional.of(testProject));
+        doNothing().when(projectService).ensureUserCanViewProject(testProject, userMakingRequest); // para adm esse método não deve lançar exceção
+
+        List<Task> tasksFromRepo = List.of(existingTask); 
+        Page<Task> taskPageFromRepo = new PageImpl<>(tasksFromRepo, pageable, tasksFromRepo.size());
+
+        when(taskRepository.findTasksFiltered(expectedStatusEnum, dueDateFilter, projectIdFilter, pageable)).thenReturn(taskPageFromRepo);
+
+        TaskResponseFilteredDTO taskFilteredDto = new TaskResponseFilteredDTO();
+        taskFilteredDto.setId(existingTask.getId());
+        taskFilteredDto.setTitle(existingTask.getTitle());
+        taskFilteredDto.setStatus(expectedStatusEnum); 
+
+        List<TaskResponseFilteredDTO> dtoList = List.of(taskFilteredDto);
+        PagedResponse<TaskResponseFilteredDTO> expectedPagedResponse = new PagedResponse<>(
+            dtoList,
+            taskPageFromRepo.getNumber(),
+            taskPageFromRepo.getSize(),
+            taskPageFromRepo.getTotalElements(),
+            taskPageFromRepo.getTotalPages(),
+            taskPageFromRepo.isLast()
+        );
+        when(pagedResponseMapper.toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class)).thenReturn(expectedPagedResponse);
+
+        //act 
+
+        PagedResponse<TaskResponseFilteredDTO> actualPagedResponse = taskService.getAllTasksFiltered(
+            statusFilterString,
+            dueDateFilter,
+            projectIdFilter,
+            pageable,
+            userMakingRequest
+        );
+
+        // Assert
+        assertNotNull(actualPagedResponse, "PagedResponse should not be null.");
+        assertEquals(expectedPagedResponse.getTotalElements(), actualPagedResponse.getTotalElements());
+        assertFalse(actualPagedResponse.getContent().isEmpty());
+        assertEquals(existingTask.getTitle(), actualPagedResponse.getContent().get(0).getTitle());
+
+        verify(projectRepository, times(1)).findById(projectIdFilter);
+        verify(projectService, times(1)).ensureUserCanViewProject(testProject, userMakingRequest);
+        verify(taskRepository, times(1)).findTasksFiltered(expectedStatusEnum, dueDateFilter, projectIdFilter, pageable);
+        verify(taskRepository, never()).findTasksFilteredByUser(any(), any(), any(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, times(1)).toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class);
+    }
+
+    @Test
+    @DisplayName("4.3: Admin should get ResourceNotFoundException when filtering by a non-existent projectId")
+        void getAllTasksFiltered_shouldThrowResourceNotFoundException_whenAdminFiltersByNonExistentProjectId() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 5);
+        User userMakingRequest = adminUser;
+
+        Long nonExistentProjectId = 999L; // ID de projeto inexistente
+        String statusFilterString = "TODO";
+        LocalDateTime dueDateFilter = null;
+
+        when(projectRepository.findById(nonExistentProjectId)).thenReturn(Optional.empty());
+
+        //act e Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.getAllTasksFiltered(
+                statusFilterString,
+                dueDateFilter,
+                nonExistentProjectId,
+                pageable,
+                userMakingRequest
+            );
+        });
+
+        verify(projectRepository, times(1)).findById(nonExistentProjectId);
+        verify(projectService, never()).ensureUserCanViewProject(any(Project.class), any(User.class));
+        verify(taskRepository, never()).findTasksFiltered(any(), any(), any(), any(Pageable.class));
+        verify(taskRepository, never()).findTasksFilteredByUser(any(), any(), any(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+}
+
+    @Test
+    @DisplayName("4.4: Admin should get IllegalArgumentException whenwhen filtering by an invalid status string")
+    void getAllTasksFiltered_shouldThrowIllegalArgumentException_whenAdminFiltersByInvalidStatusString() {
+
+        //Arrange
+        Pageable pageable = PageRequest.of(0, 5);
+        User userMakingRequest = adminUser;
+
+        String invalidStatusString = "INVALID_STATUS"; // Status inválido
+        LocalDateTime dueDateFilter = null;
+        Long projectIdFilter = null;
+
+        //act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            taskService.getAllTasksFiltered(
+                invalidStatusString,
+                dueDateFilter,
+                projectIdFilter,
+                pageable,
+                userMakingRequest
+            );
+        });
+        verify(projectRepository, never()).findById(anyLong());
+        verify(projectService, never()).ensureUserCanViewProject(any(Project.class), any(User.class));
+        verify(taskRepository, never()).findTasksFiltered(any(), any(), any(), any(Pageable.class));
+        verify(taskRepository, never()).findTasksFilteredByUser(any(), any(), any(), anyLong(), any(Pageable.class));
+        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+
+}
+
+    @Test
+    @DisplayName("4.5: Normal user should get their tasks (no filters) using getAllTasksFiltered")
+    void getAllTasksFiltered_shouldReturnUserTasks_whenNormalUserAndNoFilters() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        User userMakingRequest = normalUser; // Usuário normal fazendo a requisição
+
+        List<Task> userTasksFromRepo = List.of(existingTask);
+        Page<Task> taskPageFromRepo = new PageImpl<>(userTasksFromRepo, pageable, userTasksFromRepo.size());
+
+        when(taskRepository.findTasksFilteredByUser(null, null, null, userMakingRequest.getUserId(), pageable))
+            .thenReturn(taskPageFromRepo);
+
+        TaskResponseFilteredDTO filteredDto = new TaskResponseFilteredDTO();
+        filteredDto.setId(existingTask.getId());
+        filteredDto.setTitle(existingTask.getTitle());
+
+        List<TaskResponseFilteredDTO> dtoList = List.of(filteredDto);
+        PagedResponse<TaskResponseFilteredDTO> expectedPagedResponse = new PagedResponse<>(
+            dtoList,
+            taskPageFromRepo.getNumber(),
+            taskPageFromRepo.getSize(),
+            taskPageFromRepo.getTotalElements(),
+            taskPageFromRepo.getTotalPages(),
+            taskPageFromRepo.isLast()
+        );
+        when(pagedResponseMapper.toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class))
+            .thenReturn(expectedPagedResponse);
+
+        // Act
+        PagedResponse<TaskResponseFilteredDTO> actualPagedResponse = taskService.getAllTasksFiltered(
+            null,       
+            null,      
+            null,       
+            pageable,
+            userMakingRequest 
+        );
+
+        // Assert
+        assertNotNull(actualPagedResponse, "PagedResponse should not be null.");
+        assertEquals(expectedPagedResponse.getTotalElements(), actualPagedResponse.getTotalElements(), "Total elements should match.");
+        assertFalse(actualPagedResponse.getContent().isEmpty(), "Content list should not be empty if tasks are returned.");
+        assertEquals(existingTask.getTitle(), actualPagedResponse.getContent().get(0).getTitle(), "Task title should match.");
+
+        verify(projectRepository, never()).findById(anyLong());
+        verify(projectService, never()).ensureUserCanViewProject(any(Project.class), any(User.class));
+        verify(taskRepository, times(1)).findTasksFilteredByUser(null, null, null, userMakingRequest.getUserId(), pageable);
+        verify(taskRepository, never()).findTasksFiltered(any(), any(), any(), any(Pageable.class));
+        verify(pagedResponseMapper, times(1)).toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class);
+    }
+
+    @Test
+    @DisplayName("4.6: Normal user should get their tasks with filters applied using getAllTasksFiltered")
+    void getAllTasksFiltered_shouldReturnUserTasksForSpecificProject_whenNormalUserFiltersByValidProjectId() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        User userMakingRequest = normalUser; // normalUser faz parte do testProject 
+        Long projectIdFilter = testProject.getId();
+
+        when(projectRepository.findById(projectIdFilter)).thenReturn(Optional.of(testProject));
+        doNothing().when(projectService).ensureUserCanViewProject(testProject, userMakingRequest);
+
+        List<Task> tasksFromRepo = List.of(existingTask);
+        Page<Task> taskPageFromRepo = new PageImpl<>(tasksFromRepo, pageable, tasksFromRepo.size());
+
+        when(taskRepository.findTasksFilteredByUser(null, null, projectIdFilter, userMakingRequest.getUserId(), pageable))
+            .thenReturn(taskPageFromRepo);
+
+        TaskResponseFilteredDTO filteredDto = new TaskResponseFilteredDTO();
+        filteredDto.setId(existingTask.getId());
+        filteredDto.setTitle(existingTask.getTitle());
+        ProjectResponseFilteredDTO projectDto = new ProjectResponseFilteredDTO(); 
+        projectDto.setId(projectIdFilter);
+        projectDto.setTitle(testProject.getTitle());
+        filteredDto.setProject(projectDto); 
+
+        List<TaskResponseFilteredDTO> dtoList = List.of(filteredDto);
+        PagedResponse<TaskResponseFilteredDTO> expectedPagedResponse = new PagedResponse<>(
+            dtoList, taskPageFromRepo.getNumber(), taskPageFromRepo.getSize(),
+            taskPageFromRepo.getTotalElements(), taskPageFromRepo.getTotalPages(), taskPageFromRepo.isLast()
+        );
+        when(pagedResponseMapper.toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class))
+            .thenReturn(expectedPagedResponse);
+
+        // Act
+        PagedResponse<TaskResponseFilteredDTO> actualPagedResponse = taskService.getAllTasksFiltered(
+            null,          
+            null,          
+            projectIdFilter,
+            pageable,
+            userMakingRequest
+        );
+
+        // Assert
+        assertNotNull(actualPagedResponse);
+        assertFalse(actualPagedResponse.getContent().isEmpty());
+        assertEquals(1, actualPagedResponse.getTotalElements());
+        TaskResponseFilteredDTO taskInResponse = actualPagedResponse.getContent().get(0);
+        assertEquals(existingTask.getTitle(), taskInResponse.getTitle());
+        assertNotNull(taskInResponse.getProject());
+        assertEquals(projectIdFilter, taskInResponse.getProject().getId()); 
+
+        verify(projectRepository, times(1)).findById(projectIdFilter);
+        verify(projectService, times(1)).ensureUserCanViewProject(testProject, userMakingRequest);
+        verify(taskRepository, times(1)).findTasksFilteredByUser(null, null, projectIdFilter, userMakingRequest.getUserId(), pageable);
+        verify(pagedResponseMapper, times(1)).toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class);
+    }
 
 
+    @Test
+    @DisplayName("4.7: Should throw AccessDeniedException when normal user tries to filter tasks by project they do not belong to")
+    void getAllTasksFiltered_shouldThrowAccessDeniedException_whenNormalUserFiltersByProjectIdTheyDoNotBelongTo() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        User userMakingRequest = otherUser;
+        Long projectIdFilter = testProject.getId(); 
 
+        when(projectRepository.findById(projectIdFilter)).thenReturn(Optional.of(testProject));
+        doThrow(new AccessDeniedException("You do not have permission to access this resource."))
+            .when(projectService).ensureUserCanViewProject(testProject, userMakingRequest);
 
+        // Act & Assert
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+            taskService.getAllTasksFiltered(
+                null,           
+                null,           
+                projectIdFilter, 
+                pageable,
+                userMakingRequest
+            );
+        });
+
+        assertEquals("You do not have permission to access this resource.", exception.getMessage());
+
+        verify(projectRepository, times(1)).findById(projectIdFilter);
+        verify(projectService, times(1)).ensureUserCanViewProject(testProject, userMakingRequest); 
+        verify(taskRepository, never()).findTasksFilteredByUser(any(), any(), any(), anyLong(), any(Pageable.class)); 
+        verify(pagedResponseMapper, never()).toPagedResponse(any(), any());
+    }
+
+    @Test
+    @DisplayName("4.9: Normal user should get their tasks filtered by status using getAllTasksFiltered")
+    void getAllTasksFiltered_shouldReturnUserTasksFilteredByStatus_whenNormalUserFiltersByStatus() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        User userMakingRequest = normalUser;
+        String statusFilterString = "INPROGRESS"; 
+        Status expectedStatusEnum = Status.INPROGRESS;
+
+        List<Task> tasksFromRepo = List.of(existingTask); 
+        Page<Task> taskPageFromRepo = new PageImpl<>(tasksFromRepo, pageable, tasksFromRepo.size());
+
+        when(taskRepository.findTasksFilteredByUser(expectedStatusEnum, null, null, userMakingRequest.getUserId(), pageable)).thenReturn(taskPageFromRepo);
+
+        TaskResponseFilteredDTO filteredDto = new TaskResponseFilteredDTO();
+        filteredDto.setId(existingTask.getId());
+        filteredDto.setTitle(existingTask.getTitle());
+        filteredDto.setStatus(expectedStatusEnum); 
+        
+        List<TaskResponseFilteredDTO> dtoList = List.of(filteredDto);
+        PagedResponse<TaskResponseFilteredDTO> expectedPagedResponse = new PagedResponse<>(
+            dtoList, taskPageFromRepo.getNumber(), taskPageFromRepo.getSize(),
+            taskPageFromRepo.getTotalElements(), taskPageFromRepo.getTotalPages(), taskPageFromRepo.isLast()
+        );
+        when(pagedResponseMapper.toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class))
+            .thenReturn(expectedPagedResponse);
+
+        // Act
+        PagedResponse<TaskResponseFilteredDTO> actualPagedResponse = taskService.getAllTasksFiltered(
+            statusFilterString, 
+            null,               
+            null,               
+            pageable,
+            userMakingRequest
+        );
+
+        // Assert
+        assertNotNull(actualPagedResponse);
+        assertFalse(actualPagedResponse.getContent().isEmpty());
+        assertEquals(1, actualPagedResponse.getTotalElements());
+        TaskResponseFilteredDTO taskInResponse = actualPagedResponse.getContent().get(0);
+        assertEquals(existingTask.getTitle(), taskInResponse.getTitle());
+        assertEquals(expectedStatusEnum, taskInResponse.getStatus()); 
+
+        verify(projectRepository, never()).findById(anyLong()); // Nenhum filtro de projeto foi usado
+        verify(projectService, never()).ensureUserCanViewProject(any(), any()); 
+        verify(taskRepository, times(1)).findTasksFilteredByUser(expectedStatusEnum, null, null, userMakingRequest.getUserId(), pageable);
+        verify(pagedResponseMapper, times(1)).toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class);
+    }
 
 
 }
+
+
+
+

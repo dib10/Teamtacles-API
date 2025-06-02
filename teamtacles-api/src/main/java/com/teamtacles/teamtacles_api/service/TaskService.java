@@ -52,10 +52,17 @@ public class TaskService {
     public TaskResponseDTO createTask(Long id_project, TaskRequestDTO taskRequestDTO, User userFromToken) {        
         Project project = findprojects(id_project);
         User creatorUser = findUsers(userFromToken.getUserId());
+
+        projectService.ensureUserCanViewProject(project, creatorUser);
+
         List<User> usersResponsability = new ArrayList<>();
         
         for (Long userId : taskRequestDTO.getUsersResponsability()) {
             usersResponsability.add(findUsers(userId));
+        }
+
+        if (!usersResponsability.contains(creatorUser)) {
+            usersResponsability.add(creatorUser);
         }
         
         Task convertedTask = modelMapper.map(taskRequestDTO, Task.class);

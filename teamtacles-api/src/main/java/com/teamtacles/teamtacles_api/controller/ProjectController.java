@@ -26,6 +26,10 @@ import com.teamtacles.teamtacles_api.dto.response.ProjectResponseDTO;
 import com.teamtacles.teamtacles_api.model.UserAuthenticated;
 import com.teamtacles.teamtacles_api.service.ProjectService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PutMapping;
 
@@ -39,32 +43,77 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    @Operation(summary = "Create a new project", description = "Creates a new project with the provided details. The authenticated user will be set as the project creator.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Project created successfully."),
+        @ApiResponse(responseCode = "400", description = "Bad Request: Invalid project data provided (missing fields, invalid format)."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
+    })
     @PostMapping
-    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<ProjectResponseDTO> createProject (@RequestBody @Valid @Parameter(description = "Details of the project to be created (name, description, team...).") ProjectRequestDTO projectRequestDTO, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         ProjectResponseDTO projectResponseDTO = projectService.createProject(projectRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
 
+    @Operation(summary = "Get all projects", description = "Retrieves a paginated list of all projects. Users can typically only view projects they are associated with.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved the paginated list of projects."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
+    })
     @GetMapping("/all")
-    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(Pageable pageable, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> getAllProjects(@Parameter(description = "Pagination parameters (page, size, sort).") Pageable pageable, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         PagedResponse projectsPage = projectService.getAllProjects(pageable, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(projectsPage);
     }  
 
+    @Operation(summary = "Update an existing project", description = "Updates an existing project identified by its ID. Only the project creator or an administrator may update the project.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Project updated successfully, returns the updated project details."),
+        @ApiResponse(responseCode = "400", description = "Bad Request: Invalid project data provided (missing fields, invalid format)."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: User does not have permission to update this project."),
+        @ApiResponse(responseCode = "404", description = "Not Found: Project with the specified ID was not found."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
+    })
     @PutMapping("/{id}") 
-    public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestDTO projectRequestDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<ProjectResponseDTO> updateProject(@PathVariable @Parameter(description = "Project ID") Long id, 
+        @Valid @RequestBody @Parameter(description = "Updated details for the project.") ProjectRequestDTO projectRequestDTO, 
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
         ProjectResponseDTO responseDTO = projectService.updateProject(id, projectRequestDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
+    @Operation(summary = "Partially update a project", description = "Updates one or more specific fields of an existing project identified by its ID. Only the project creator or an administrator may perform this partial update.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Project updated successfully, returns the updated project details."),
+        @ApiResponse(responseCode = "400", description = "Bad Request: Invalid project data provided (missing fields, invalid format)."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: User does not have permission to update this project."),
+        @ApiResponse(responseCode = "404", description = "Not Found: Project with the specified ID was not found."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
+    })
     @PatchMapping("/{id}")
-    public ResponseEntity<ProjectResponseDTO> partialUpdateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequestPatchDTO projectRequestPatchDTO, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<ProjectResponseDTO> partialUpdateProject(@PathVariable @Parameter(description = "Project ID") Long id, 
+        @Valid @RequestBody @Parameter(description = "Fields to be partially updated for the project.") ProjectRequestPatchDTO projectRequestPatchDTO, 
+        @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser
+    ){
         ProjectResponseDTO responseDTO = projectService.partialUpdateProject(id, projectRequestPatchDTO, authenticatedUser.getUser());
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
+    @Operation(summary = "Delete a project", description = "Deletes an existing project identified by its ID. Only the project creator or an administrator may delete the project.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Project deleted successfully (No Content)."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized: Authentication required or invalid token."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: User does not have permission to delete this project."),
+        @ApiResponse(responseCode = "404", description = "Not Found: Project with the specified ID was not found."),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred.")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id, @AuthenticationPrincipal UserAuthenticated authenticatedUser){
+    public ResponseEntity<Void> deleteTask(@PathVariable @Parameter(description = "Project ID") Long id, @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated authenticatedUser){
         projectService.deleteProject(id, authenticatedUser.getUser());
         return ResponseEntity.noContent().build();
     }

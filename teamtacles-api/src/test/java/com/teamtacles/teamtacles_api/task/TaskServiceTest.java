@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.test.context.ActiveProfiles;
 import com.teamtacles.teamtacles_api.dto.request.TaskRequestDTO;
+import com.teamtacles.teamtacles_api.dto.request.TaskRequestPatchDTO;
 import com.teamtacles.teamtacles_api.dto.response.ProjectResponseFilteredDTO;
 import com.teamtacles.teamtacles_api.dto.response.TaskResponseDTO;
 import com.teamtacles.teamtacles_api.exception.InvalidTaskStateException;
@@ -872,6 +875,502 @@ public class TaskServiceTest {
         verify(pagedResponseMapper, times(1)).toPagedResponse(taskPageFromRepo, TaskResponseFilteredDTO.class);
     }
 
+    @Test
+    @DisplayName("5.2: Task owner should update task status successfully")
+    void updateStatus_shouldUpdateStatus_whenUserIsOwner() {
+        // Arrange
+        TaskRequestPatchDTO patchDTO = new TaskRequestPatchDTO();
+        patchDTO.setStatus(Optional.of(Status.TODO));
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+
+        Task updatedTaskEntity = new Task();
+        updatedTaskEntity.setId(taskId);
+        updatedTaskEntity.setProject(testProject);
+        updatedTaskEntity.setOwner(normalUser);
+        updatedTaskEntity.setStatus(Status.TODO);
+        updatedTaskEntity.setUsersResponsability(existingTask.getUsersResponsability());
+        updatedTaskEntity.setTitle(existingTask.getTitle());
+
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        when(taskRepository.save(any(Task.class))).thenReturn(updatedTaskEntity);
+
+        TaskResponseDTO expectedResponse = new TaskResponseDTO();
+        expectedResponse.setId(taskId);
+        expectedResponse.setStatus(Status.TODO);
+        when(modelMapper.map(updatedTaskEntity, TaskResponseDTO.class)).thenReturn(expectedResponse);
+
+        // Act
+        TaskResponseDTO actualResponse = taskService.updateStatus(projectId, taskId, patchDTO, normalUser);
+
+        // Assert
+        assertNotNull(actualResponse);
+        assertEquals(Status.TODO, actualResponse.getStatus());
+        verify(taskRepository).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("5.3: Responsible user should update task status successfully")
+    void updateStatus_shouldUpdateStatus_whenUserIsResponsible() {
+        // Arrange
+        TaskRequestPatchDTO patchDTO = new TaskRequestPatchDTO();
+        patchDTO.setStatus(Optional.of(Status.DONE));
+        Long taskId = existingTask.getId(); 
+        Long projectId = testProject.getId();
+
+        Task updatedTaskEntity = new Task();
+        updatedTaskEntity.setId(taskId);
+        updatedTaskEntity.setProject(testProject);
+        updatedTaskEntity.setOwner(normalUser);
+        updatedTaskEntity.setStatus(Status.DONE);
+        updatedTaskEntity.setUsersResponsability(existingTask.getUsersResponsability());
+        updatedTaskEntity.setTitle(existingTask.getTitle());
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        when(taskRepository.save(any(Task.class))).thenReturn(updatedTaskEntity);
+
+        TaskResponseDTO expectedResponse = new TaskResponseDTO();
+        expectedResponse.setId(taskId);
+        expectedResponse.setStatus(Status.DONE);
+        when(modelMapper.map(updatedTaskEntity, TaskResponseDTO.class)).thenReturn(expectedResponse);
+
+        // Act
+        TaskResponseDTO actualResponse = taskService.updateStatus(projectId, taskId, patchDTO, responsibleUser);
+
+        // Assert
+        assertNotNull(actualResponse);
+        assertEquals(Status.DONE, actualResponse.getStatus());
+        verify(taskRepository).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("5.4: Should throw AccessDeniedException when unauthorized user tries to update status")
+    void updateStatus_shouldThrowAccessDeniedException_whenUserIsUnauthorized() {
+        // Arrange
+        TaskRequestPatchDTO patchDTO = new TaskRequestPatchDTO();
+        patchDTO.setStatus(Optional.of(Status.DONE));
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+            taskService.updateStatus(projectId, taskId, patchDTO, otherUser);
+        });
+        assertEquals(" FORBIDDEN - You do not have permission to modify this task.", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("5.5: Should throw ResourceNotFoundException when task for status update is not found")
+    void updateStatus_shouldThrowResourceNotFoundException_whenTaskNotFound() {
+        // Arrange
+        TaskRequestPatchDTO patchDTO = new TaskRequestPatchDTO();
+        patchDTO.setStatus(Optional.of(Status.DONE));
+        Long nonExistentTaskId = 999L;
+        Long projectId = testProject.getId();
+
+        when(taskRepository.findById(nonExistentTaskId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.updateStatus(projectId, nonExistentTaskId, patchDTO, adminUser);
+        });
+        assertEquals("Task Not Found.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("5.6: Should throw ResourceNotFoundException if task does not belong to project during status update")
+    void updateStatus_shouldThrowResourceNotFoundException_whenTaskDoesNotBelongToProject() {
+        // Arrange
+        TaskRequestPatchDTO patchDTO = new TaskRequestPatchDTO();
+        patchDTO.setStatus(Optional.of(Status.DONE));
+        Long taskId = existingTask.getId();
+        Long differentProjectId = 777L; 
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.updateStatus(differentProjectId, taskId, patchDTO, adminUser);
+        });
+        assertEquals("Task does not belong to the specified project.", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+
+    @Test
+    @DisplayName("6.1: Admin should update task details successfully")
+    void updateTask_shouldUpdateDetails_whenUserIsAdmin() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+        requestDTO.setTitle("Updated Title by Admin");
+        requestDTO.setDescription("Updated Description");
+        requestDTO.setDueDate(LocalDateTime.now().plusDays(10));
+        requestDTO.setUsersResponsability(List.of(responsibleUser.getUserId()));
+
+        when(userRepository.findById(responsibleUser.getUserId())).thenReturn(Optional.of(responsibleUser));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        // aqui existingTask é o objeto que já existe no repositório e será atualizado, irei utilizar o doAnswer para simular o comportamento do ModelMapper e garante que quando modelMapper.map(requestDTO, task) é chamado no serviço, task (que é existingTask) no contexto d teste é realmente modificado.
+        doAnswer(invocation -> {
+            TaskRequestDTO sourceDto = invocation.getArgument(0);
+            Task destinationTask = invocation.getArgument(1); //  será existingTask
+            destinationTask.setTitle(sourceDto.getTitle());
+            destinationTask.setDescription(sourceDto.getDescription());
+            destinationTask.setDueDate(sourceDto.getDueDate());
+            // usersResponsability é tratado separadamente no método de serviço após esta chamada de map
+            return null; 
+        }).when(modelMapper).map(eq(requestDTO), eq(existingTask)); 
+
+        // Mock da operação de salvar. Agora ela pode retornar o mesmo objeto que foi modificado (existingTask).
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Mock do mapeamento final da entidade Task (agora atualizada) para TaskResponseDTO.
+        // Este será chamado com 'existingTask' modificado (que se tornou 'updated' no serviço).
+        when(modelMapper.map(any(Task.class), eq(TaskResponseDTO.class))).thenAnswer(invocation -> {
+            Task taskInput = invocation.getArgument(0);
+            TaskResponseDTO responseDto = new TaskResponseDTO();
+            // Mapeie todos os campos relevantes do taskInput para o responseDto
+            responseDto.setId(taskInput.getId());
+            responseDto.setTitle(taskInput.getTitle()); // Deve ser o título atualizado
+            responseDto.setDescription(taskInput.getDescription());
+            responseDto.setDueDate(taskInput.getDueDate());
+            responseDto.setStatus(taskInput.getStatus());
+            return responseDto;
+        });
+
+        // Act
+        TaskResponseDTO actualResponse = taskService.updateTask(projectId, taskId, requestDTO, adminUser);
+
+        // Assert
+        assertNotNull(actualResponse);
+        assertEquals(requestDTO.getTitle(), actualResponse.getTitle(), "O título na resposta do DTO deve ser o atualizado.");
+
+        ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).save(taskCaptor.capture());
+        Task capturedTask = taskCaptor.getValue();
+
+        assertEquals(requestDTO.getTitle(), capturedTask.getTitle(), "O título da tarefa capturada para salvar deve ser o atualizado.");
+        assertEquals(requestDTO.getDescription(), capturedTask.getDescription());
+        assertEquals(requestDTO.getDueDate(), capturedTask.getDueDate());
+        assertTrue(capturedTask.getUsersResponsability().stream().anyMatch(u -> u.getUserId().equals(responsibleUser.getUserId())), "A lista de responsabilidade deve conter o usuário esperado.");
+        assertEquals(existingTask.getOwner().getUserId(), capturedTask.getOwner().getUserId(), "O proprietário da tarefa deve ser preservado."); 
+        assertEquals(existingTask.getProject().getId(), capturedTask.getProject().getId(), "O projeto da tarefa deve ser preservado."); 
+    }
+
+    @Test
+    @DisplayName("6.2: Task owner should update task details successfully")
+    void updateTask_shouldUpdateDetails_whenUserIsOwner() {
+        // Arrange
+        Long taskId = existingTask.getId(); 
+        Long projectId = testProject.getId();
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+        requestDTO.setTitle("Updated Title by Owner");
+        requestDTO.setDescription("New description by owner");
+        requestDTO.setDueDate(LocalDateTime.now().plusDays(12)); 
+        requestDTO.setUsersResponsability(List.of(normalUser.getUserId())); 
+
+        when(userRepository.findById(normalUser.getUserId())).thenReturn(Optional.of(normalUser));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        doAnswer(invocation -> {
+            TaskRequestDTO sourceDto = invocation.getArgument(0);
+            Task destinationTask = invocation.getArgument(1); // Este será 'existingTask'
+            destinationTask.setTitle(sourceDto.getTitle());
+            destinationTask.setDescription(sourceDto.getDescription());
+            destinationTask.setDueDate(sourceDto.getDueDate());
+            // usersResponsability é tratado separadamente no método de serviço.
+            return null; 
+        }).when(modelMapper).map(eq(requestDTO), eq(existingTask));
+
+        Task savedTaskEntity = new Task();
+        savedTaskEntity.setId(taskId);
+        savedTaskEntity.setProject(existingTask.getProject()); // Preservar projeto
+        savedTaskEntity.setOwner(existingTask.getOwner());   // Preservar owner
+        savedTaskEntity.setStatus(existingTask.getStatus()); // Preservar status, pois não está no TaskRequestDTO
+        savedTaskEntity.setTitle(requestDTO.getTitle());      // Título atualizado
+        savedTaskEntity.setDescription(requestDTO.getDescription()); // Descrição atualizada
+        savedTaskEntity.setDueDate(requestDTO.getDueDate());       // Data atualizada
+        savedTaskEntity.setUsersResponsability(List.of(normalUser)); // Responsabilidade atualizada
+
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTaskEntity);
+
+        TaskResponseDTO expectedResponse = new TaskResponseDTO();
+        expectedResponse.setId(taskId);
+        expectedResponse.setTitle(requestDTO.getTitle());
+        expectedResponse.setDescription(requestDTO.getDescription());
+        expectedResponse.setDueDate(requestDTO.getDueDate());
+
+        when(modelMapper.map(savedTaskEntity, TaskResponseDTO.class)).thenReturn(expectedResponse);
+
+        // Act
+        TaskResponseDTO actualResponse = taskService.updateTask(projectId, taskId, requestDTO, normalUser);
+
+        // Assert
+        assertNotNull(actualResponse);
+        assertEquals(requestDTO.getTitle(), actualResponse.getTitle());
+        assertEquals(requestDTO.getDescription(), actualResponse.getDescription());
+        assertEquals(requestDTO.getDueDate(), actualResponse.getDueDate());
+
+        ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).save(taskCaptor.capture());
+        Task capturedTask = taskCaptor.getValue();
+
+        assertEquals(requestDTO.getTitle(), capturedTask.getTitle());
+        assertEquals(requestDTO.getDescription(), capturedTask.getDescription());
+        assertEquals(requestDTO.getDueDate(), capturedTask.getDueDate());
+        assertTrue(capturedTask.getUsersResponsability().stream().anyMatch(u -> u.getUserId().equals(normalUser.getUserId())));
+    }
+
+
+    @Test
+    @DisplayName("6.3: Responsible user should update task details successfully")
+    void updateTask_shouldUpdateDetails_whenUserIsResponsible() {
+        // Arrange
+        Long taskId = existingTask.getId(); 
+        Long projectId = testProject.getId();
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+        requestDTO.setTitle("Updated Title by Responsible");
+        requestDTO.setDescription("Description updated by responsible user");
+        requestDTO.setDueDate(LocalDateTime.now().plusDays(15));
+        requestDTO.setUsersResponsability(List.of(responsibleUser.getUserId()));
+
+        when(userRepository.findById(responsibleUser.getUserId())).thenReturn(Optional.of(responsibleUser));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        doAnswer(invocation -> {
+            TaskRequestDTO sourceDto = invocation.getArgument(0);
+            Task destinationTask = invocation.getArgument(1); 
+            destinationTask.setTitle(sourceDto.getTitle());
+            destinationTask.setDescription(sourceDto.getDescription());
+            destinationTask.setDueDate(sourceDto.getDueDate());
+            // usersResponsability é tratado separadamente no método de serviço
+            return null; 
+        }).when(modelMapper).map(eq(requestDTO), eq(existingTask));
+
+        //'savedTaskEntity' deve refletir o estado da tarefa após todas as modificações
+        Task savedTaskEntity = new Task();
+        savedTaskEntity.setId(taskId);
+        savedTaskEntity.setProject(existingTask.getProject());
+        savedTaskEntity.setOwner(existingTask.getOwner());
+        savedTaskEntity.setStatus(existingTask.getStatus()); 
+        savedTaskEntity.setTitle(requestDTO.getTitle());     
+        savedTaskEntity.setDescription(requestDTO.getDescription()); 
+        savedTaskEntity.setDueDate(requestDTO.getDueDate());       
+        savedTaskEntity.setUsersResponsability(List.of(responsibleUser)); 
+
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTaskEntity);
+
+        TaskResponseDTO expectedResponse = new TaskResponseDTO();
+        expectedResponse.setId(taskId);
+        expectedResponse.setTitle(requestDTO.getTitle());
+        expectedResponse.setDescription(requestDTO.getDescription());
+        expectedResponse.setDueDate(requestDTO.getDueDate());
+
+        when(modelMapper.map(savedTaskEntity, TaskResponseDTO.class)).thenReturn(expectedResponse);
+
+        // Act
+        TaskResponseDTO actualResponse = taskService.updateTask(projectId, taskId, requestDTO, responsibleUser);
+
+        // Assert
+        assertNotNull(actualResponse);
+        assertEquals(requestDTO.getTitle(), actualResponse.getTitle());
+        assertEquals(requestDTO.getDescription(), actualResponse.getDescription()); 
+        assertEquals(requestDTO.getDueDate(), actualResponse.getDueDate());      
+
+        ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).save(taskCaptor.capture());
+        Task capturedTask = taskCaptor.getValue();
+
+        assertEquals(requestDTO.getTitle(), capturedTask.getTitle());
+        assertEquals(requestDTO.getDescription(), capturedTask.getDescription());
+        assertEquals(requestDTO.getDueDate(), capturedTask.getDueDate());
+        assertTrue(capturedTask.getUsersResponsability().stream().anyMatch(u -> u.getUserId().equals(responsibleUser.getUserId())));
+        assertEquals(existingTask.getOwner().getUserId(), capturedTask.getOwner().getUserId());
+        assertEquals(existingTask.getProject().getId(), capturedTask.getProject().getId());
+        assertEquals(existingTask.getStatus(), capturedTask.getStatus()); 
+    }
+
+
+
+    @Test
+    @DisplayName("6.4: Should throw AccessDeniedException when unauthorized user tries to update task")
+    void updateTask_shouldThrowAccessDeniedException_whenUserIsUnauthorized() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+        TaskRequestDTO requestDTO = new TaskRequestDTO(); 
+        requestDTO.setTitle("Attempted Update");
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+            taskService.updateTask(projectId, taskId, requestDTO, otherUser);
+        });
+        assertEquals(" FORBIDDEN - You do not have permission to modify this task.", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("6.5: Should throw ResourceNotFoundException when task to update is not found")
+    void updateTask_shouldThrowResourceNotFoundException_whenTaskNotFound() {
+        // Arrange
+        Long nonExistentTaskId = 999L;
+        Long projectId = testProject.getId();
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+
+        when(taskRepository.findById(nonExistentTaskId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.updateTask(projectId, nonExistentTaskId, requestDTO, adminUser);
+        });
+        assertEquals("Task Not Found.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("6.6: Should throw ResourceNotFoundException if task does not belong to project during update")
+    void updateTask_shouldThrowResourceNotFoundException_whenTaskDoesNotBelongToProject() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long differentProjectId = 777L;
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.updateTask(differentProjectId, taskId, requestDTO, adminUser);
+        });
+        assertEquals("Task does not belong to the specified project.", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("6.7: Should throw ResourceNotFoundException if a user in usersResponsability from DTO is not found during update")
+    void updateTask_shouldThrowResourceNotFoundException_whenResponsibleUserInDTONotFound() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+        requestDTO.setTitle("Update with invalid user");
+        Long nonExistentUserId = 888L;
+        requestDTO.setUsersResponsability(List.of(nonExistentUserId)); 
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty()); 
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.updateTask(projectId, taskId, requestDTO, adminUser);
+        });
+        assertEquals("User Not Found.", exception.getMessage()); 
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("7.1: Admin should delete any task successfully")
+    void deleteTask_shouldDeleteTask_whenUserIsAdmin() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        doNothing().when(taskRepository).delete(existingTask);
+
+        // Act
+        taskService.deleteTask(projectId, taskId, adminUser);
+
+        // Assert
+        verify(taskRepository).delete(existingTask);
+    }
+
+    @Test
+    @DisplayName("7.2: Task owner should delete their own task successfully")
+    void deleteTask_shouldDeleteTask_whenUserIsOwner() {
+        // Arrange
+        Long taskId = existingTask.getId(); // o dono é o normalUser
+        Long projectId = testProject.getId();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        doNothing().when(taskRepository).delete(existingTask);
+
+        // Act
+        taskService.deleteTask(projectId, taskId, normalUser);
+
+        // Assert
+        verify(taskRepository).delete(existingTask);
+    }
+
+    @Test
+    @DisplayName("7.3: Responsible user should delete task successfully")
+    void deleteTask_shouldDeleteTask_whenUserIsResponsible() {
+        // Arrange
+        Long taskId = existingTask.getId(); // o responsável é o responsibleUser
+        Long projectId = testProject.getId();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        doNothing().when(taskRepository).delete(existingTask);
+
+        // Act
+        taskService.deleteTask(projectId, taskId, responsibleUser);
+
+        // Assert
+        verify(taskRepository).delete(existingTask);
+    }
+
+    @Test
+    @DisplayName("7.4: Should throw AccessDeniedException when unauthorized user tries to delete task")
+    void deleteTask_shouldThrowAccessDeniedException_whenUserIsUnauthorized() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long projectId = testProject.getId();
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+            taskService.deleteTask(projectId, taskId, otherUser);
+        });
+        assertEquals(" FORBIDDEN - You do not have permission to modify this task.", exception.getMessage());
+        verify(taskRepository, never()).delete(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("7.5: Should throw ResourceNotFoundException when task to delete is not found")
+    void deleteTask_shouldThrowResourceNotFoundException_whenTaskNotFound() {
+        // Arrange
+        Long nonExistentTaskId = 999L;
+        Long projectId = testProject.getId();
+
+        when(taskRepository.findById(nonExistentTaskId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.deleteTask(projectId, nonExistentTaskId, adminUser);
+        });
+        assertEquals("Task Not Found.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("7.6: Should throw ResourceNotFoundException if task does not belong to project during deletion")
+    void deleteTask_shouldThrowResourceNotFoundException_whenTaskDoesNotBelongToProject() {
+        // Arrange
+        Long taskId = existingTask.getId();
+        Long differentProjectId = 777L;
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.deleteTask(differentProjectId, taskId, adminUser);
+        });
+        assertEquals("Task does not belong to the specified project.", exception.getMessage());
+        verify(taskRepository, never()).delete(any(Task.class));
+    }
 
 }
 

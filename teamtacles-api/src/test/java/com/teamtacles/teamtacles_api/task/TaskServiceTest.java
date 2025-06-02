@@ -257,6 +257,38 @@ public class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("1.4: Should throw AccessDeniedException when user creating task cannot view project")
+    void createTask_shouldThrowAccessDeniedException_whenUserCannotViewProject() {
+        // Arrange
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+        requestDTO.setTitle("Task in inaccessible project");
+        requestDTO.setDescription("This task should not be created.");
+        requestDTO.setDueDate(LocalDateTime.now().plusDays(7));
+        requestDTO.setUsersResponsability(List.of(responsibleUser.getUserId())); 
+
+        Long projectId = testProject.getId();
+        User userAttemptingCreation = otherUser; 
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
+        when(userRepository.findById(userAttemptingCreation.getUserId())).thenReturn(Optional.of(userAttemptingCreation));
+        doThrow(new AccessDeniedException("User does not have permission to view this project to create a task."))
+            .when(projectService).ensureUserCanViewProject(eq(testProject), eq(userAttemptingCreation));
+
+        // Act & Assert
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> {
+            taskService.createTask(projectId, requestDTO, userAttemptingCreation);
+        });
+        
+        assertEquals("User does not have permission to view this project to create a task.", exception.getMessage());
+        
+        verify(projectRepository).findById(projectId); 
+        verify(userRepository).findById(userAttemptingCreation.getUserId());
+        verify(projectService).ensureUserCanViewProject(eq(testProject), eq(userAttemptingCreation)); 
+        verify(userRepository, never()).findById(responsibleUser.getUserId()); 
+        verify(taskRepository, never()).save(any(Task.class)); 
+    }
+
+    @Test
     @DisplayName("2.1: Admin should get any task")
     void getTasksById_shouldReturnTask_whenUserIsAdmin() {
         //Arrange

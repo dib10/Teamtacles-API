@@ -92,8 +92,13 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-mysql</artifactId>
-			<version>10.20.1</version> <!-- mesma versão do flyway-core que você está usando -->
+			<version>10.20.1</version> 
 		</dependency>
+		<dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.5.1</version>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>

@@ -1,4 +1,4 @@
-![Diagrama](teamtacles_banner.jpg)
+![Diagrama](banner.png)
 # Teamtacles-API
 **Seu gerenciador de tarefas em equipe, direto do fundo do mar. 🦑🌊**
 

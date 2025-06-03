@@ -18,7 +18,13 @@ A API visa **auxiliar o gerenciamento de tarefas em equipe**, promovendo a colab
 - [🌊 Correntes de Testes: Validação das Funcionalidades](#-correntes-de-testes-validacao-das-funcionalidades)
 
 ## ✨ Funcionalidades Ancoradas
-A documentação completa da API está disponível via Swagger em: http://localhost:8080/swagger-ui.html
+A documentação completa da API está disponível via Swagger 
+
+🌐 Versão Online (Render): https://teamtacles-api.onrender.com/swagger-ui/index.html
+
+🏠 Localmente: http://localhost:8080/swagger-ui.html
+
+
 
 **🔐 Autenticação e Autorização**
 - Cadastro de usuários com nome, e-mail e senha;

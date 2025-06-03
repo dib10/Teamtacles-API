@@ -24,8 +24,6 @@ A documentação completa da API está disponível via Swagger
 
 🏠 Localmente: http://localhost:8080/swagger-ui.html
 
-
-
 **🔐 Autenticação e Autorização**
 - Cadastro de usuários com nome, e-mail e senha;
 - Login com geração de token JWT;

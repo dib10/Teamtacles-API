@@ -15,6 +15,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamtacles.teamtacles_api.dto.request.RoleRequestDTO;
 import com.teamtacles.teamtacles_api.dto.request.UserRequestDTO;
 import com.teamtacles.teamtacles_api.model.User;
+import com.teamtacles.teamtacles_api.repository.ProjectRepository;
+import com.teamtacles.teamtacles_api.repository.TaskRepository;
 import com.teamtacles.teamtacles_api.repository.UserRepository;
 import com.teamtacles.teamtacles_api.util.TestDataAux;
 
@@ -44,10 +46,18 @@ public class UserControllerTest {
     private UserRepository userRepository;
 
     @Autowired
+    private ProjectRepository projectRepository; // Injetar ProjectRepository
+
+    @Autowired
+    private TaskRepository taskRepository;     // Injetar TaskRepository
+
+    @Autowired
     private TestDataAux testDataAux;
 
     @BeforeEach
     void setUpEnvironment() {
+        taskRepository.deleteAll();
+        projectRepository.deleteAll();
         userRepository.deleteAll();
         testDataAux.setUpTestUsers();
     }

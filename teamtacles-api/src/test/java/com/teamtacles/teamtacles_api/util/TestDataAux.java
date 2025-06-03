@@ -55,7 +55,7 @@ public class TestDataAux {
         normalUser = new User();
         normalUser.setUserName("testuser");
         normalUser.setPassword(passwordEncoder.encode("12345"));
-        normalUser.setEmail("testuser@exemple.com");
+        normalUser.setEmail("testuser@example.com");
         normalUser.setRoles(Set.of(userRoleEntity));
         userRepository.save(normalUser);
         userToken = jwtService.generateToken(normalUser);
@@ -64,7 +64,7 @@ public class TestDataAux {
         adminUser = new User();
         adminUser.setUserName("testadmin");
         adminUser.setPassword(passwordEncoder.encode("12345"));
-        adminUser.setEmail("testadmin@exemple.com");
+        adminUser.setEmail("testadmin@example.com");
         adminUser.setRoles(Set.of(adminRoleEntity));
         userRepository.save(adminUser);
         adminToken = jwtService.generateToken(adminUser);

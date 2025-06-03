@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS users(
-    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGSERIAL PRIMARY KEY,
     user_name VARCHAR(50) NOT NULL,
     email VARCHAR(250),
     password VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS role(
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     role_name VARCHAR(10) NOT NULL UNIQUE
 );
 
@@ -19,18 +19,18 @@ CREATE TABLE IF NOT EXISTS user_roles (
 );
 
 CREATE TABLE IF NOT EXISTS project (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(50) NOT NULL,
-    description VARCHAR(50),
+    description VARCHAR(250),
     creator_id BIGINT NOT NULL,
     FOREIGN KEY (creator_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS task (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(50) NOT NULL,
     description VARCHAR(250),
-    due_date DATETIME NOT NULL,
+    due_date TIMESTAMP NOT NULL,
     status VARCHAR(10),
     user_id BIGINT NOT NULL,
     project_id BIGINT NOT NULL,

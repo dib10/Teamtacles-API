@@ -8,7 +8,7 @@
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white) 	![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/postgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 
 
-O **Teamtacles-API** é uma API RESTful desenvolvida utilizando **Java, Spring Boot, Flyway para migrações de banco de dados, MySQL como banco de dados e Spring Security com autenticação baseada em JWT**.
+O **Teamtacles-API** é uma API RESTful desenvolvida utilizando **Java, Spring Boot, Flyway para migrações de banco de dados, PostgreSQL como banco de dados e Spring Security com autenticação baseada em JWT**.
 
 A API visa **auxiliar o gerenciamento de tarefas em equipe**, promovendo a colaboração e a produtividade durante a realização de projetos. O **Teamtacles-API** é ideal para times que estão se sentindo **afogados no mar de tarefas** e desejam o **apoio de tentáculos** na organização e gerenciamento, tornando o fluxo de trabalho mais **eficiente e colaborativo**.
 

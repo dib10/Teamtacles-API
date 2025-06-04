@@ -421,3 +421,25 @@ Além disso, realizamos o isolamento dos testes com o uso do `@BeforeEach`, gara
 - ✅ Deve, como USER responsável, deletar sua task, retornando 204 No Content.
 - ❌ Deve retornar 403 Forbidden para usuário não responsável ao tentar deletar task.
 
+## 🐙 Conheça os Desenvolvedores
+
+O Teamtacles-API foi desenvolvido pelas habilidades e dedicação de nossa equipe:
+
+---
+
+### Caio Dib
+* **GitHub:** 🐙 [`@dib10`](https://github.com/dib10)
+
+---
+
+### Gabriela Santana
+* **GitHub:** 🐙 [`@GabihSantana`](https://github.com/GabihSantana)
+
+---
+
+### Pedro Lauton
+* **GitHub:** 🐙 [`@PedroLauton`](https://github.com/PedroLauton)
+
+---
+
+

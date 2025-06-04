@@ -5,7 +5,8 @@
 
 ![promocional](teamtacles-gif.gif) 
 ---
-![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white) 	![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white) ![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
+![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white) 	![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/postgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+
 
 O **Teamtacles-API** é uma API RESTful desenvolvida utilizando **Java, Spring Boot, Flyway para migrações de banco de dados, MySQL como banco de dados e Spring Security com autenticação baseada em JWT**.
 

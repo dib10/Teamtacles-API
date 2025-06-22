@@ -56,11 +56,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      @Query("""
         SELECT DISTINCT t FROM Task t
         LEFT JOIN t.usersResponsability ur
-        WHERE (:statusEnum IS NULL OR t.status = :statusEnum)
-        AND (:dueDate IS NULL OR t.dueDate <= :dueDate)
-        AND (:projectId IS NULL OR t.project.id = :projectId)
-        AND (:userId IS NULL OR (t.owner.id = :userId OR ur.id = :userId))
-        """)
+        WHERE COALESCE(:statusEnum, t.status) = t.status
+        AND t.dueDate <= COALESCE(:dueDate, t.dueDate)
+        AND COALESCE(:projectId, t.project.id) = t.project.id
+        AND (t.owner.id = :userId OR ur.id = :userId)
+    """)
     Page<Task> findTasksFilteredByUser(Status statusEnum, LocalDateTime dueDate, Long projectId, Long userId, Pageable pageable);
 
     /**
@@ -76,10 +76,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     @Query("""
         SELECT DISTINCT t FROM Task t
-        WHERE (:statusEnum IS NULL OR t.status = :statusEnum)
-        AND (:dueDate IS NULL OR t.dueDate <= :dueDate)
-        AND (:projectId IS NULL OR t.project.id = :projectId)
-        """)
+        WHERE COALESCE(:statusEnum, t.status) = t.status
+        AND t.dueDate <= COALESCE(:dueDate, t.dueDate)
+        AND COALESCE(:projectId, t.project.id) = t.project.id
+    """)
     Page<Task> findTasksFiltered(Status statusEnum, LocalDateTime dueDate, Long projectId, Pageable pageable);  
 }
 
